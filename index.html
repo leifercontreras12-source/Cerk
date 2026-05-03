@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>+CERK v5.3</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --navy: #1a3a5f; --accent: #00b4d8; }
+        body { background: #f4f7f9; margin: 0; font-family: sans-serif; color: var(--navy); overflow-x: hidden; }
+        .app-container { display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
+        
+        /* LOGO SÓLIDO */
+        .brand { 
+            font-family: "Brush Script MT", cursive; font-size: 4rem; color: var(--navy);
+            text-shadow: 1px 1px 0 var(--navy), -1px -1px 0 var(--navy);
+            -webkit-text-stroke: 1.2px var(--navy); text-align: center; width: 100%;
+        }
+        .brand span { color: var(--accent); font-family: sans-serif; font-weight: 900; margin-right: -8px; -webkit-text-stroke: 0; }
+
+        .dial-wrapper { width: 100%; height: 130px; display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+        .dial-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        
+        .scene { width: 100%; height: 80px; perspective: 1000px; display: flex; justify-content: center; }
+        .carousel { width: 120px; height: 70px; position: absolute; transform-style: preserve-3d; transition: transform 0.5s ease-out; }
+        
+        .carousel__item {
+            position: absolute; width: 110px; height: 70px; background: white; border: 1px solid #ddd; border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); backface-visibility: hidden; overflow: hidden;
+        }
+
+        .item-img { width: 100%; height: 70%; object-fit: cover; }
+        .item-text { font-size: 0.55rem; font-weight: 900; margin: 4px 0; text-transform: uppercase; }
+
+        .footer-cta { width: 100%; background: white; padding: 30px 0; text-align: center; border-top: 1px solid #eee; margin-top: 20px; }
+        .btn { background: var(--navy); color: white; border: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="brand"><span>+</span>CERK</div>
+        <div id="dials-root" style="width: 100%;"></div>
+        <div class="footer-cta">
+            <p style="font-weight:600; font-size:0.9rem; margin-bottom:10px;">¿Quieres formar parte de nuestro equipo?</p>
+            <button class="btn">REGÍSTRATE</button>
+        </div>
+    </div>
+
+    <script>
+        // Credenciales (Rellenar después)
+        const SUPABASE_URL = "https://zuknitfklgiuoipnjraj.supabase.co/rest/v1/"; const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo";
+        
+        // Enlace optimizado de la imagen para que no pese el código
+        const imgPanaderia = "https://i.ibb.co/Vpgm05y/1001385284.jpg"; 
+
+        const categories = [
+            { name: "Gastronomía", items: ["Panadería", "Restaurante", "Fast Food", "Heladería", "Comida China", "Pizzería", "Pollo Brasa", "Cafetería", "Repostería"] },
+            { name: "Salud", items: Array(9).fill("Próximamente") }
+        ];
+
+        const root = document.getElementById('dials-root');
+        categories.forEach((cat, dIdx) => {
+            const wrap = document.createElement('div'); wrap.className = 'dial-wrapper';
+            let items = "";
+            cat.items.forEach((label, i) => {
+                const angle = i * 40;
+                const content = (dIdx === 0 && i === 0) 
+                    ? `<img src="${imgPanaderia}" class="item-img"><span class="item-text">${label}</span>`
+                    : `<div style="font-size:1.5rem; font-weight:900; margin-top:5px;">${i+1}</div><span class="item-text">${label}</span>`;
+                items += `<div class="carousel__item" id="it-${dIdx}-${i}" style="transform: rotateY(${angle}deg) translateZ(160px) rotateY(-${angle}deg)">${content}</div>`;
+            });
+            wrap.innerHTML = `<div class="dial-label">${cat.name}</div><div class="scene"><div class="carousel" id="car-${dIdx}">${items}</div></div>`;
+            root.appendChild(wrap);
+
+            const car = document.getElementById(`car-${dIdx}`);
+            let startX = 0, rot = 0;
+            
+            const update = (n) => {
+                car.style.transform = `rotateY(${n}deg)`;
+                for(let i=0; i<9; i++){
+                    const el = document.getElementById(`it-${dIdx}-${i}`);
+                    el.style.transform = `rotateY(${i*40}deg) translateZ(160px) rotateY(${-i*40 - n}deg)`;
+                }
+            };
+
+            car.addEventListener('touchstart', e => { startX = e.touches[0].pageX; car.style.transition = 'none'; });
+            car.addEventListener('touchmove', e => { update(rot + (e.touches[0].pageX - startX) * 0.5); });
+            car.addEventListener('touchend', e => {
+                rot += Math.round(((e.changedTouches[0].pageX - startX) * 0.5) / 40) * 40;
+                car.style.transition = 'transform 0.5s ease-out';
+                update(rot);
+            });
+        });
+    </script>
+</body>
+</html>
