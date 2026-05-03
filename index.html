@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CERK - 7 Diales</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #00e5ff; --dark: #050505; --card-bg: rgba(20, 20, 20, 0.95); }
+        body { 
+            background: var(--dark); color: white; font-family: 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; overflow-x: hidden; touch-action: pan-y;
+        }
+        
+        /* Contenedor Principal */
+        .app-container { display: flex; flex-direction: column; align-items: center; padding-top: 20px; }
+
+        /* Marca CERK Integrada */
+        .brand {
+            font-size: 2.5rem; font-weight: 900; letter-spacing: 8px;
+            color: var(--primary); text-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+            margin-bottom: 5px; z-index: 10;
+        }
+
+        /* Cada bloque de Dial */
+        .dial-wrapper {
+            position: relative; width: 100%; height: 140px;
+            display: flex; flex-direction: column; align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .dial-label {
+            font-size: 0.75rem; color: var(--primary); font-weight: bold;
+            text-transform: uppercase; letter-spacing: 3px; margin-bottom: 35px;
+            opacity: 0.8;
+        }
+
+        /* Escena 3D */
+        .scene { 
+            width: 100%; height: 80px; perspective: 800px; 
+            display: flex; justify-content: center;
+        }
+
+        .carousel {
+            width: 130px; height: 60px; position: absolute;
+            transform-style: preserve-3d; transition: transform 0.5s ease-out;
+            cursor: grab;
+        }
+
+        /* Recuadros (9 por dial) */
+        .carousel__item {
+            position: absolute; width: 120px; height: 55px;
+            background: var(--card-bg); border: 1px solid rgba(0, 229, 255, 0.2);
+            border-radius: 8px; display: flex; align-items: center;
+            justify-content: center; font-size: 0.7rem; text-align: center;
+            padding: 5px; box-sizing: border-box; backface-visibility: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* Resalte central */
+        .selection-guide {
+            position: absolute; top: 75px; width: 140px; height: 65px;
+            border: 2px solid var(--primary); border-radius: 10px;
+            pointer-events: none; box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+            z-index: 5;
+        }
+
+        .footer { margin-top: 30px; padding: 20px; text-align: center; opacity: 0.5; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="brand">CERK</div>
+        <div id="dials-root"></div>
+        <div class="footer">CERK Engine v2.0 - 7 Diales Activos</div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE TUS LLAVES (ASEGÚRATE DE QUE ESTÉN BIEN)
+        const SUPABASE_URL = "https://zuknitfklgiuoipnjraj.supabase.co/rest/v1/"; 
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Estructura de 7 Diales con 9 Recuadros cada uno
+        const estructura = [
+            { id: 0, titulo: "Rubro Principal", items: ["Gastronomía", "Salud", "Motor", "Hogar", "Tecnología", "Mascotas", "Belleza", "Construcción", "Viajes"] },
+            { id: 1, titulo: "Especialidad", items: ["Pizzerías", "Sushi", "Hamburgesas", "China", "Pollo", "Postres", "Cafés", "Tacos", "Arepas"] },
+            { id: 2, titulo: "Sub-Especialidad", items: ["Opción 1", "Opción 2", "Opción 3", "Opción 4", "Opción 5", "Opción 6", "Opción 7", "Opción 8", "Opción 9"] },
+            { id: 3, titulo: "Nivel 4", items: ["A", "B", "C", "D", "E", "F", "G", "H", "I"] },
+            { id: 4, titulo: "Nivel 5", items: ["A", "B", "C", "D", "E", "F", "G", "H", "I"] },
+            { id: 5, titulo: "Nivel 6", items: ["A", "B", "C", "D", "E", "F", "G", "H", "I"] },
+            { id: 6, titulo: "Nivel 7", items: ["A", "B", "C", "D", "E", "F", "G", "H", "I"] }
+        ];
+
+        const root = document.getElementById('dials-root');
+        let rotations = new Array(7).fill(0);
+
+        estructura.forEach((dial, dIdx) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'dial-wrapper';
+            
+            wrapper.innerHTML = `
+                <div class="dial-label">${dial.titulo}</div>
+                <div class="selection-guide"></div>
+                <div class="scene">
+                    <div class="carousel" id="carousel-${dIdx}" data-idx="${dIdx}">
+                        ${dial.items.map((text, i) => `
+                            <div class="carousel__item" style="transform: rotateY(${i * 40}deg) translateZ(180px)">
+                                ${text}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            root.appendChild(wrapper);
+
+            // Lógica de Deslizamiento (Touch)
+            const carousel = wrapper.querySelector('.carousel');
+            let startX = 0;
+            let currentRotation = 0;
+
+            carousel.addEventListener('touchstart', e => {
+                startX = e.touches[0].pageX;
+                currentRotation = rotations[dIdx];
+            });
+
+            carousel.addEventListener('touchmove', e => {
+                let diff = e.touches[0].pageX - startX;
+                carousel.style.transform = `rotateY(${currentRotation + diff * 0.5}deg)`;
+            });
+
+            carousel.addEventListener('touchend', e => {
+                let diff = e.changedTouches[0].pageX - startX;
+                // Redondear a la cara más cercana (40 grados)
+                let moveSteps = Math.round(diff / 40);
+                rotations[dIdx] = currentRotation + (moveSteps * 40);
+                carousel.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                carousel.style.transform = `rotateY(${rotations[dIdx]}deg)`;
+            });
+            
+            // También funciona con clic para pruebas rápidas
+            carousel.addEventListener('click', () => {
+                rotations[dIdx] -= 40;
+                carousel.style.transform = `rotateY(${rotations[dIdx]}deg)`;
+            });
+        });
+
+    </script>
+</body>
+</html>
