@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>+CERK v3.0 - Full Power</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { 
+            --bg-base: #f4f7f9;
+            --navy: #1a3a5f;
+            --accent: #00b4d8;
+        }
+        
+        body { 
+            background-color: var(--bg-base);
+            /* MAPA SVG DE ALTA DENSIDAD: Representación de San Cristóbal */
+            background-image: 
+                radial-gradient(circle at center, rgba(244,247,249,0.2) 0%, rgba(244,247,249,0.95) 100%),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%231a3a5f' stroke-width='0.8' stroke-opacity='0.18'%3E%3Cpath d='M0 100h800M0 300h800M0 500h800M0 700h800M100 0v800M300 0v800M500 0v800M700 0v800'/%3E%3Cpath d='M50 0l700 800M750 0L0 800M0 400l800 200M0 200l800 400M400 0l400 800M0 0l400 800'/%3E%3Ccircle cx='400' cy='400' r='150'/%3E%3Ccircle cx='100' cy='600' r='80'/%3E%3C/g%3E%3C/svg%3E");
+            background-attachment: fixed;
+            margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; 
+            color: var(--navy); overflow-x: hidden; touch-action: pan-y;
+        }
+        
+        .app-container { display: flex; flex-direction: column; align-items: center; padding-top: 20px; min-height: 100vh; }
+        
+        .brand { 
+            font-size: 2.8rem; font-weight: 900; letter-spacing: 8px; 
+            margin-bottom: 20px; color: var(--navy);
+        }
+        .brand span { color: var(--accent); margin-right: -5px; }
+
+        /* DIALES COMPACTOS */
+        .dial-wrapper {
+            position: relative; width: 100%; height: 115px; 
+            display: flex; flex-direction: column; align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .dial-label { 
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase; 
+            letter-spacing: 2px; margin-bottom: 8px; opacity: 0.9;
+        }
+
+        .scene { width: 100%; height: 60px; perspective: 1000px; display: flex; justify-content: center; align-items: center; }
+        .carousel { width: 130px; height: 50px; position: absolute; transform-style: preserve-3d; }
+
+        .carousel__item {
+            position: absolute; width: 110px; height: 48px;
+            background: white; border: 1px solid #d1d9e6;
+            border-radius: 12px; display: flex; align-items: center;
+            justify-content: center; font-size: 1.5rem; font-weight: 900;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); backface-visibility: hidden;
+        }
+
+        /* FOOTER AL FINAL DEL SCROLL */
+        .footer-cta {
+            width: 100%; background: white; padding: 40px 0; 
+            text-align: center; border-top: 1px solid #e0e0e0;
+            margin-top: 30px;
+        }
+
+        .btn-registrar {
+            background: var(--navy); color: white; border: none;
+            padding: 12px 30px; border-radius: 30px; font-weight: bold;
+            margin-top: 15px; cursor: pointer; display: inline-block; 
+            text-decoration: none; box-shadow: 0 5px 15px rgba(26,58,95,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="brand"><span>+</span>CERK</div>
+        <div id="dials-root" style="width: 100%;"></div>
+        
+        <div class="footer-cta">
+            <p style="margin:0; font-weight:600; font-size:0.9rem;">¿Quieres formar parte de nuestro equipo?</p>
+            <a href="#" class="btn-registrar" onclick="alert('Registro próximamente...')">REGÍSTRATE</a>
+        </div>
+    </div>
+
+    <script>
+        // --- CONEXIÓN SUPABASE ---
+        const SUPABASE_URL = "https://zuknitfklgiuoipnjraj.supabase.co/rest/v1/"; 
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo";
+        // -------------------------
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const dialNames = ["Gastronomía", "Salud y Bienestar", "Estilo y Estética", "Hogar y Construcción", "Motor e Industria", "Insumos y Distribución", "Indefinido"];
+        const root = document.getElementById('dials-root');
+        let rotations = new Array(7).fill(0);
+
+        dialNames.forEach((name, dIdx) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'dial-wrapper';
+            let itemsHTML = "";
+            for(let i=1; i<=9; i++) {
+                const angle = (i-1) * 40;
+                itemsHTML += `<div class="carousel__item" id="item-${dIdx}-${i-1}" style="transform: rotateY(${angle}deg) translateZ(170px) rotateY(-${angle}deg)">${i}</div>`;
+            }
+            wrapper.innerHTML = `<div class="dial-label">${name}</div><div class="scene"><div class="carousel" id="carousel-${dIdx}">${itemsHTML}</div></div>`;
+            root.appendChild(wrapper);
+
+            const carousel = wrapper.querySelector('.carousel');
+            let startX = 0, currentRotation = 0;
+
+            const updateOrbital = (newRot) => {
+                carousel.style.transform = `rotateY(${newRot}deg)`;
+                for(let i=0; i<9; i++) {
+                    const item = document.getElementById(`item-${dIdx}-${i}`);
+                    const baseA = i * 40;
+                    item.style.transform = `rotateY(${baseA}deg) translateZ(170px) rotateY(${-baseA - newRot}deg)`;
+                }
+            };
+
+            carousel.addEventListener('touchstart', e => {
+                startX = e.touches[0].pageX;
+                currentRotation = rotations[dIdx];
+                carousel.style.transition = 'none';
+                for(let i=0; i<9; i++) document.getElementById(`item-${dIdx}-${i}`).style.transition = 'none';
+            });
+
+            carousel.addEventListener('touchmove', e => {
+                let diff = e.touches[0].pageX - startX;
+                updateOrbital(currentRotation + diff * 0.5); 
+            });
+
+            carousel.addEventListener('touchend', e => {
+                let diff = e.changedTouches[0].pageX - startX;
+                let moveSteps = Math.round((diff * 0.5) / 40);
+                rotations[dIdx] = currentRotation + (moveSteps * 40);
+                
+                const anim = 'transform 0.5s cubic-bezier(0.1, 0.8, 0.2, 1)';
+                carousel.style.transition = anim;
+                for(let i=0; i<9; i++) document.getElementById(`item-${dIdx}-${i}`).style.transition = anim;
+                updateOrbital(rotations[dIdx]);
+            });
+        });
+    </script>
+</body>
+</html>
