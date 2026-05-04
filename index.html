@@ -284,7 +284,11 @@ function obtenerGPS() {
             status.innerText = "No capturada";
             status.style.color = "#d63031";
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { 
+            enableHighAccuracy: false, // Relajamos la exigencia de satélites puros
+            timeout: 15000,            // Le damos 15 segundos para pensar
+            maximumAge: 0              // Obligamos a que busque la posición de AHORA
+        }
     );
 } // Aquí terminaba obtenerGPS correctamente
 
