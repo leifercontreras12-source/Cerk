@@ -253,9 +253,10 @@ input, select {
             document.getElementById('map-title').innerText = label.toUpperCase();
             irA('map-view');
         }
-function obtenerGPS() {
-    const status = document.getElementById('gps-status');
-    const btn = document.querySelector('.btn-gps');
+        
+        function obtenerGPS() {
+            const status = document.getElementById('gps-status');
+            const btn = document.querySelector('.btn-gps');
     
     status.innerText = "⌛ Buscando tu local...";
     
