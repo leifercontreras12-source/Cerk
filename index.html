@@ -254,10 +254,39 @@ input, select {
             irA('map-view');
         }
 
-        function finalizarRegistro() {
-            alert("¡OK! Ya estás registrado. Espera la confirmación de pago y revisa tu mapa!");
-            window.location.href = "https://wa.me/584126435032?text=Hola! Quiero activar mi comercio.";
-        }
+        async function finalizarRegistro() {
+    // 1. Recoger los datos de los campos
+    const nombre = document.getElementById('reg-nombre').value;
+    const dial = document.getElementById('sel-dial').value;
+    const tipo = document.getElementById('sel-tipo').value;
+    const tlf = document.getElementById('reg-tel').value;
+    const fotos = document.getElementById('reg-fotos').files;
+
+    // 2. EL CANDADO: Validación de campos obligatorios
+    if (!nombre || !dial || !tipo || !tlf) {
+        alert("❌ Por favor, rellena todos los campos de texto y selecciona el tipo de negocio.");
+        return; // Se detiene aquí
+    }
+
+    if (!userCoords) {
+        alert("📍 Es obligatorio capturar la ubicación GPS del local.");
+        return; // Se detiene aquí
+    }
+
+    if (fotos.length === 0) {
+        alert("📸 Debes subir al menos 1 foto de tu comercio.");
+        return; // Se detiene aquí
+    }
+
+    // 3. Si todo está bien, procedemos
+    alert("🚀 ¡Datos validados con éxito! Ahora te redirigiremos a WhatsApp para confirmar tu pago.");
+    
+    const mensaje = `Hola! Quiero activar mi comercio:%0A- Nombre: ${nombre}%0A- Dial: ${dial}%0A- Tipo: ${tipo}%0A- Ubicación: ${userCoords.lat}, ${userCoords.lng}`;
+    
+    // Aquí pon TU número sin el símbolo + (Ejemplo: 584120000000)
+    const tuNumero = "584247126548"; 
+    window.location.href = `https://wa.me/${tuNumero}?text=${mensaje}`;
+}
 
         window.onload = inicializarApp;
     </script>
