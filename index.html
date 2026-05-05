@@ -216,63 +216,15 @@ input, select {
                 updateRot(dIdx, rotations[dIdx]);
             });
         }
+    } } // <--- Esta es la llave que cierra setupCarouselLogic
 
-        function updateRot(dIdx, val) {
-            rotations[dIdx] = val;
-            const car = document.getElementById(`car-${dIdx}`);
-            car.style.transform = `rotateY(${val}deg)`;
-            for(let i=0; i<9; i++) {
-                const el = document.getElementById(`it-${dIdx}-${i}`);
-                if (el) {
-                    const base = i * 40;
-                    el.style.transform = `rotateY(${base}deg) translateZ(185px) rotateY(${-base - val}deg)`;
-                }
-            }
-        }
-
-        function irA(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(id === 'map-view') setTimeout(() => map.invalidateSize(), 200);
-        }
-
-        function mostrarIntroRegistro() {
-            const intro = document.getElementById('intro-screen');
-            intro.classList.add('active');
-            setTimeout(() => { intro.classList.add('fade-out'); setTimeout(() => { intro.classList.remove('active', 'fade-out'); irA('register-ui'); }, 500); }, 2000);
-        }
-
-        function actualizarSubcategorias() {
-            const dial = document.getElementById('sel-dial').value;
-            const tipo = document.getElementById('sel-tipo');
-            tipo.innerHTML = '';
-            if(subcategorias[dial]) subcategorias[dial].forEach(s => tipo.innerHTML += `<option value="${s}">${s}</option>`);
-        }
-
-        function verMapa(label) {
-            document.getElementById('map-title').innerText = label.toUpperCase();
-            irA('map-view');
-        }
-function obtenerGPS() {
-    const status = document.getElementById('gps-status');
-    const btn = document.querySelector('.btn-gps');
-    
-                            status.innerText = "⌛ Buscando tu local...";
-        },
-        (err) => {
-            alert("❌ Error: Por favor activa el GPS.");
-            status.innerText = "No capturada";
-            status.style.color = "#d63031";
-        },
-        { enableHighAccuracy: false, timeout: 15000, maximumAge: 0 }
-    );
-}
+// --- AQUÍ COMIENZA EL SELLO DEL ARCHIVO ---
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
 
 <script>
-// Configuración técnica
+// Configuración de conexión limpia
 const _URL = 'https://zuknitfklgiuoipnjraj.supabase.co';
 const _KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo';
 const supabase = window.supabase.createClient(_URL, _KEY);
@@ -287,7 +239,7 @@ async function finalizarRegistro() {
     const fotos = document.getElementById('reg-fotos').files;
 
     if (!nombre || !tlf || !userCoords) {
-        alert("❌ Faltan datos críticos (Nombre, Teléfono o GPS).");
+        alert("❌ Error: Falta capturar GPS o rellenar datos.");
         return;
     }
     if (fotos.length < 2) {
@@ -334,24 +286,25 @@ async function finalizarRegistro() {
 
         if (insErr) throw insErr;
 
-        // Éxito: Salto a WhatsApp
-        const msg = `¡Hola! Registro listo para: ${nombre}. Espero instrucciones de pago.`;
+        // Salto final a WhatsApp
+        const msg = `¡Hola! Registro listo para: ${nombre}. Ya subí los datos a +CERK.`;
         window.location.href = `https://wa.me/584247126548?text=${encodeURIComponent(msg)}`;
 
     } catch (e) {
-        alert("❌ Error: " + e.message);
+        alert("❌ Error crítico: " + e.message);
         btn.disabled = false;
         btn.innerText = "ACTIVAR Y PAGAR";
     }
 }
 
-// Reiniciar la App para que cargue fondo y diales
-window.onload = () => {
-    if (typeof inicializarApp === "function") {
+// Forzamos el arranque de la interfaz
+window.addEventListener('load', () => {
+    if (typeof inicializarApp === 'function') {
         inicializarApp();
+    } else {
+        console.error("La función inicializarApp no se encontró.");
     }
-};
+});
 </script>
 </body>
 </html>
-
