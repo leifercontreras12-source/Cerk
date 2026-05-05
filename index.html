@@ -257,7 +257,7 @@ function obtenerGPS() {
     const status = document.getElementById('gps-status');
     const btn = document.querySelector('.btn-gps');
     
-                status.innerText = "⌛ Buscando tu local...";
+                            status.innerText = "⌛ Buscando tu local...";
         },
         (err) => {
             alert("❌ Error: Por favor activa el GPS.");
@@ -267,68 +267,58 @@ function obtenerGPS() {
         { enableHighAccuracy: false, timeout: 15000, maximumAge: 0 }
     );
 }
-
-// --- BLOQUE DE SUPABASE (Librería y Configuración) ---
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
+
 <script>
-const supabaseUrl = 'https://zuknitfklgiuoipnjraj.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+// Configuración técnica
+const _URL = 'https://zuknitfklgiuoipnjraj.supabase.co';
+const _KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo';
+const supabase = window.supabase.createClient(_URL, _KEY);
 
 async function finalizarRegistro() {
-    const btnRegistro = document.querySelector("button[onclick='finalizarRegistro()']");
+    const btn = document.querySelector("button[onclick='finalizarRegistro()']");
     const nombre = document.getElementById('reg-nombre').value;
     const dial = document.getElementById('sel-dial').value;
     const tipo = document.getElementById('sel-tipo').value;
     const tlf = document.getElementById('reg-tel').value;
-    const direccion = document.getElementById('reg-direccion')?.value || "No provista";
+    const direccion = document.getElementById('reg-direccion')?.value || "Sin dirección";
     const fotos = document.getElementById('reg-fotos').files;
 
-    if (!nombre || !dial || !tipo || !tlf) {
-        alert("❌ Por favor, rellena todos los campos.");
+    if (!nombre || !tlf || !userCoords) {
+        alert("❌ Faltan datos críticos (Nombre, Teléfono o GPS).");
         return;
     }
-    if (!userCoords) {
-        alert("📍 Es obligatorio capturar la ubicación GPS.");
+    if (fotos.length < 2) {
+        alert("📸 Sube al menos 2 fotos.");
         return;
-    }
-    if (fotos.length < 2 || fotos.length > 3) {
-        alert("📸 Sube entre 2 y 3 fotos.");
-        return;
-    }
-
-    for (let i = 0; i < fotos.length; i++) {
-        if (fotos[i].size > 1048576) {
-            alert(`⚠️ La foto "${fotos[i].name}" supera el límite de 1MB.`);
-            return;
-        }
     }
 
     try {
-        btnRegistro.disabled = true;
-        btnRegistro.innerText = "⏳ Procesando... un momento";
+        btn.disabled = true;
+        btn.innerText = "⏳ Subiendo fotos...";
 
-        let fotosSubidasUrls = [];
-
+        let urls = [];
         for (let i = 0; i < fotos.length; i++) {
-            const file = fotos[i];
-            const fileName = `${Date.now()}_${i}.${file.name.split('.').pop()}`;
-
-            const { data, error: uploadError } = await supabase.storage
+            const ext = fotos[i].name.split('.').pop();
+            const path = `${Date.now()}_${i}.${ext}`;
+            
+            const { data: upData, error: upErr } = await supabase.storage
                 .from('fotos-comercios')
-                .upload(fileName, file);
+                .upload(path, fotos[i]);
 
-            if (uploadError) throw uploadError;
+            if (upErr) throw upErr;
 
             const { data: { publicUrl } } = supabase.storage
                 .from('fotos-comercios')
-                .getPublicUrl(fileName);
+                .getPublicUrl(path);
             
-            fotosSubidasUrls.push(publicUrl);
+            urls.push(publicUrl);
         }
 
-        const { error: insertError } = await supabase
+        btn.innerText = "💾 Guardando datos...";
+        const { error: insErr } = await supabase
             .from('Comercios')
             .insert([{
                 Nombre: nombre,
@@ -338,24 +328,30 @@ async function finalizarRegistro() {
                 "Dirección Exacta": direccion,
                 Latitud: userCoords.lat,
                 Longitud: userCoords.lng,
-                fotos_urls: fotosSubidasUrls,
-                pago_confirmado: false 
+                fotos_urls: urls,
+                pago_confirmado: false
             }]);
 
-        if (insertError) throw insertError;
+        if (insErr) throw insErr;
 
-        const mensaje = `Hola! Quiero activar mi comercio: ${nombre}. Ya subí las fotos y el registro está en el sistema.`;
-        const tuNumero = "584247126548"; 
-        window.location.href = `https://wa.me/${tuNumero}?text=${encodeURIComponent(mensaje)}`;
+        // Éxito: Salto a WhatsApp
+        const msg = `¡Hola! Registro listo para: ${nombre}. Espero instrucciones de pago.`;
+        window.location.href = `https://wa.me/584247126548?text=${encodeURIComponent(msg)}`;
 
-    } catch (error) {
-        alert("❌ Error: " + error.message);
-        btnRegistro.disabled = false;
-        btnRegistro.innerText = "ACTIVAR Y PAGAR";
+    } catch (e) {
+        alert("❌ Error: " + e.message);
+        btn.disabled = false;
+        btn.innerText = "ACTIVAR Y PAGAR";
     }
 }
 
-window.onload = inicializarApp;
+// Reiniciar la App para que cargue fondo y diales
+window.onload = () => {
+    if (typeof inicializarApp === "function") {
+        inicializarApp();
+    }
+};
 </script>
 </body>
 </html>
+
