@@ -10,7 +10,6 @@
     <style>
         :root { --bg-base: #f4f7f9; --navy: #1a3a5f; --accent: #00b4d8; --white: #ffffff; }
         
-        /* FONDO DE MAPA DIFUSO RESTAURADO */
         body { 
             background-color: var(--bg-base); 
             background-image: radial-gradient(circle at center, rgba(244,247,249,0.2) 0%, rgba(244,247,249,0.98) 100%),
@@ -18,131 +17,104 @@
             background-attachment: fixed; margin: 0; font-family: 'Segoe UI', sans-serif; color: var(--navy); overflow-x: hidden;
         }
 
-        /* PANTALLAS */
         .screen { display: none; min-height: 100vh; width: 100%; flex-direction: column; align-items: center; }
         .active { display: flex; }
 
-        /* INTRO ANIMADA */
-        #intro-screen { background: var(--navy); color: white; justify-content: center; z-index: 9999; position: fixed; }
-        .fade-out { animation: fadeOut 0.5s forwards; }
+        #intro-screen { background: var(--navy); color: white; justify-content: center; z-index: 9999; position: fixed; width: 100%; height: 100vh; top:0; left:0; }
+        .fade-out { animation: fadeOut 0.8s forwards; }
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
 
-        /* UI PRINCIPAL Y DIALES */
-        .brand { font-family: "Brush Script MT", cursive; font-size: 1.8rem; margin-top: 5px; margin-bottom: 8px; opacity: 0.5; text-align: center; }
+        .brand { font-family: "Brush Script MT", cursive; font-size: 1.8rem; margin-top: 10px; margin-bottom: 10px; text-align: center; }
         .brand span { color: var(--accent); font-family: sans-serif; font-weight: 900; margin-right: -4px; }
-        .dial-wrapper { width: 100%; height: 132px; display: flex; flex-direction: column; align-items: center; margin-bottom: 2px; }
-        .dial-label { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.9; z-index: 10; }
-        .scene { width: 100%; height: 88px; perspective: 1200px; display: flex; justify-content: center; }
-        .carousel { width: 135px; height: 82px; position: absolute; transform-style: preserve-3d; transition: transform 0.5s ease-out; }
-        .carousel__item {
-            position: absolute; width: 125px; height: 80px; background: white; border: 1.5px solid #d1d9e6; border-radius: 12px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            box-shadow: 0 4px 8px rgba(26, 58, 95, 0.06); backface-visibility: hidden; overflow: hidden;
-        }
-        .item-img { width: 100%; height: 74%; object-fit: cover; border-bottom: 1px solid #f0f0f0; }
-        .item-text { font-size: 0.56rem; font-weight: 900; margin: 2px 1px; text-transform: uppercase; text-align: center; }
-
-    
-        /* FORMULARIO ELEGANTE - FOTO 1 */
-.form-container { 
-    width: 92%; max-width: 400px; background: white; border-radius: 25px; 
-    margin: 20px auto; padding: 25px; box-sizing: border-box; 
-    box-shadow: 0 15px 35px rgba(26, 58, 95, 0.15); 
-}
-.form-group { margin-bottom: 18px; text-align: left; }
-label { 
-    display: block; font-size: 0.75rem; font-weight: 900; 
-    color: #1a3a5f; text-transform: uppercase; margin-bottom: 6px; 
-}
-input, select { 
-    width: 100%; padding: 12px; border: 2px solid #e1e8f0; 
-    border-radius: 12px; box-sizing: border-box; font-size: 0.95rem;
-}
-.gps-container {
-    border: 2px dashed #00b4d8; background: #f0faff;
-    border-radius: 15px; padding: 15px; text-align: center; margin-bottom: 20px;
-}
-.warning-text { color: #d63031; font-size: 0.7rem; font-weight: bold; display: block; margin-top: 5px; }
-.btn-gps { background: #00b4d8; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; }
-.btn-main { background: #1a3a5f; color: white; width: 100%; padding: 14px; border: none; border-radius: 40px; font-weight: 800; cursor: pointer; }
-
         
-        /* MAPA */
-        .map-header { width: 100%; background: var(--navy); color: white; padding: 15px; display: flex; justify-content: space-between; box-sizing: border-box; }
-        #map { flex: 1; width: 100%; height: 100vh; }
-        .footer-cta { width: 100%; background: white; padding: 15px 0; text-align: center; border-top: 1px solid #e0e0e0; }
+        .dial-wrapper { width: 100%; height: 140px; display: flex; flex-direction: column; align-items: center; margin-bottom: 5px; }
+        .dial-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; color: var(--navy); }
+        
+        .scene { width: 100%; height: 90px; perspective: 1000px; display: flex; justify-content: center; }
+        .carousel { width: 130px; height: 85px; position: absolute; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+        
+        .carousel__item {
+            position: absolute; width: 120px; height: 80px; background: white; border: 1.5px solid #d1d9e6; border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 4px 8px rgba(26, 58, 95, 0.1); backface-visibility: hidden; overflow: hidden;
+        }
+        .item-img { width: 100%; height: 75%; object-fit: cover; }
+        .item-text { font-size: 0.58rem; font-weight: 900; margin: 2px; text-transform: uppercase; text-align: center; }
+
+        .form-container { width: 92%; max-width: 400px; background: white; border-radius: 25px; margin: 20px auto; padding: 25px; box-sizing: border-box; box-shadow: 0 15px 35px rgba(26, 58, 95, 0.15); }
+        .form-group { margin-bottom: 15px; text-align: left; width: 100%; }
+        label { display: block; font-size: 0.75rem; font-weight: 900; color: #1a3a5f; text-transform: uppercase; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 10px; border: 2px solid #e1e8f0; border-radius: 12px; box-sizing: border-box; }
+        
+        .gps-container { border: 2px dashed #00b4d8; background: #f0faff; border-radius: 15px; padding: 15px; text-align: center; margin-bottom: 20px; width: 100%; box-sizing: border-box; }
+        .btn-gps { background: #00b4d8; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-main { background: #1a3a5f; color: white; width: 100%; padding: 14px; border: none; border-radius: 40px; font-weight: 800; cursor: pointer; }
+
+        #map { width: 100%; height: calc(100vh - 60px); }
+        .map-header { width: 100%; background: var(--navy); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
+        .footer-cta { width: 100%; background: white; padding: 15px 0; text-align: center; border-top: 1px solid #e0e0e0; position: sticky; bottom: 0; }
     </style>
 </head>
 <body>
 
-    <div id="intro-screen" class="screen">
+    <div id="intro-screen" class="screen active">
         <h1 style="font-family: 'Brush Script MT', cursive; font-size: 3rem;">Bienvenido a +CERK</h1>
     </div>
 
-    <div id="main-ui" class="screen active">
+    <div id="main-ui" class="screen">
         <div class="brand"><span>+</span>CERK</div>
-        <div id="dials-root" style="width: 100%;"></div>
+        <div id="dials-root" style="width: 100%; flex: 1; overflow-y: auto; padding-bottom: 20px;"></div>
         <div class="footer-cta">
-            <button class="btn-main" style="width: auto; padding: 10px 40px;" onclick="mostrarIntroRegistro()">REGÍSTRATE</button>
+            <button class="btn-main" style="width: auto; padding: 10px 40px;" onclick="irA('register-ui')">REGÍSTRATE</button>
         </div>
     </div>
 
-    <div id="register-ui" class="screen" style="background: #f4f7f9;">
-    <div class="form-container">
-        <h2 style="text-align:center; color:#1a3a5f; margin-top:0;">Nuevo Comercio</h2>
-        
-        <div class="form-group">
-            <label>Nombre del Comercio</label>
-            <input type="text" id="reg-nombre" placeholder="Ej: Panadería El Sol">
+    <div id="register-ui" class="screen" style="background: #f4f7f9; overflow-y: auto;">
+        <div class="form-container">
+            <h2 style="text-align:center; color:#1a3a5f; margin-top:0;">Nuevo Comercio</h2>
+            <div class="form-group">
+                <label>Nombre del Comercio</label>
+                <input type="text" id="reg-nombre" placeholder="Ej: Panadería El Sol">
+            </div>
+            <div class="form-group">
+                <label>Principio de la Marcación (Dial)</label>
+                <select id="sel-dial" onchange="actualizarSubcategorias()">
+                    <option value="">Selecciona...</option>
+                    <option value="Gastronomía">1. Gastronomía</option>
+                    <option value="Salud y Bienestar">2. Salud y Bienestar</option>
+                    <option value="Estilo y Estética">3. Estilo y Estética</option>
+                    <option value="Hogar y Construcción">4. Hogar y Construcción</option>
+                    <option value="Motor e Industria">5. Motor e Industria</option>
+                    <option value="Insumos y Distribución">6. Insumos y Distribución</option>
+                    <option value="Indefinido">7. Indefinido</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>¿Qué tipo de negocio es?</label>
+                <select id="sel-tipo">
+                    <option value="">Primero elige un dial...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>WhatsApp</label>
+                <input type="tel" id="reg-tel" placeholder="Ej: 04121234567">
+            </div>
+            <div class="form-group">
+                <label>Horario de Trabajo</label>
+                <input type="text" id="reg-horario" placeholder="Ej: 8:00 - 12:00">
+            </div>
+            <div class="form-group">
+                <label>Fotos (Máx. 3 - 1MB c/u)</label>
+                <input type="file" id="reg-fotos" multiple accept="image/*">
+            </div>
+            <div class="gps-container">
+                <button id="btn-gps-main" class="btn-gps" onclick="obtenerGPS()">Capturar Ubicación GPS</button>
+                <span id="gps-status" style="display:block; margin-top:5px; font-size:0.7rem;">No capturada</span>
+            </div>
+            <button class="btn-main" onclick="finalizarRegistro()">ACTIVAR Y PAGAR</button>
+            <button onclick="irA('main-ui')" style="background:none; border:none; color:#1a3a5f; width:100%; margin-top:15px; font-weight:bold; cursor:pointer;">VOLVER ATRÁS</button>
         </div>
-
-        <div class="form-group">
-            <label>Principio de la Marcación (Dial)</label>
-            <select id="sel-dial" onchange="actualizarSubcategorias()">
-                <option value="">Selecciona...</option>
-                <option value="Gastronomía">1. Gastronomía</option>
-                <option value="Salud y Bienestar">2. Salud y Bienestar</option>
-                <option value="Estilo y Estética">3. Estilo y Estética</option>
-                <option value="Hogar y Construcción">4. Hogar y Construcción</option>
-                <option value="Motor e Industria">5. Motor e Industria</option>
-                <option value="Insumos y Distribución">6. Insumos y Distribución</option>
-                <option value="Indefinido">7. Indefinido</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>¿Qué tipo de negocio es?</label>
-            <select id="sel-tipo">
-                <option value="">Primero elige un dial...</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>WhatsApp</label>
-            <input type="tel" id="reg-tel" placeholder="Ej: 04121234567">
-        </div>
-
-        <div class="form-group">
-            <label>Horario de Trabajo</label>
-            <input type="text" id="reg-horario" placeholder="Ej: 8:00 - 12:00 / 14:00 - 18:00">
-        </div>
-
-        <div class="form-group">
-            <label>Fotos (Máx. 3 - 1MB c/u)</label>
-            <input type="file" id="reg-fotos" multiple accept="image/*">
-        </div>
-
-        <div class="gps-container">
-            <button class="btn-gps" onclick="obtenerGPS()">Capturar Ubicación GPS</button>
-            <span id="gps-status" style="display:block; margin-top:5px; font-size:0.7rem;">No capturada</span>
-            <span class="warning-text">¡Hazlo desde el físico local para precisión!</span>
-        </div>
-
-        <button class="btn-main" onclick="finalizarRegistro()">ACTIVAR Y PAGAR</button>
-        <button onclick="irA('main-ui')" style="background:none; border:none; color:#1a3a5f; width:100%; margin-top:15px; font-weight:bold; cursor:pointer;">VOLVER ATRÁS</button>
     </div>
-</div>
-
 
     <div id="map-view" class="screen">
         <div class="map-header"><span id="map-title">MAPA</span><button onclick="irA('main-ui')" style="background:var(--accent); border:none; color:white; padding:5px 10px; border-radius:5px;">CERRAR</button></div>
@@ -161,20 +133,34 @@ input, select {
 
         const subcategorias = {
             "Gastronomía": ["Panadería", "Heladería", "Comida Rápida", "Restaurant", "Repostería", "Pizzería", "Cafetería", "Comida China", "Pollo en Brasas"],
-    "Salud y Bienestar": ["Farmacia", "Consultorio", "Gimnasio", "Spa", "Clínica", "Óptica", "Laboratorio", "Odontología", "Estética"],
-    "Estilo y Estética": ["Peluquería", "Barbería", "Tienda de Ropa", "Calzado", "Accesorios", "Maquillaje", "Manicura", "Tatuajes", "Sastrería"],
-    "Hogar y Construcción": ["Ferretería", "Pinturas", "Mueblería", "Decoración", "Iluminación", "Carpintería", "Plomería", "Electricidad", "Vidriería"],
-    "Motor e Industria": ["Mecánica", "Repuestos", "Autolavado", "Latonería", "Venta de Vehículos", "Cauchería", "Lubricantes", "Baterías", "Electromecánica"],
-    "Insumos y Distribución": ["Mayorista", "Embalajes", "Limpieza", "Papelería", "Tecnología", "Seguridad", "Transporte", "Fletes", "Almacenaje"],
-    "Indefinido": ["Otros", "Servicios Varios", "Emprendimiento Nuevo"]
-};
+            "Salud y Bienestar": ["Farmacia", "Consultorio", "Gimnasio", "Spa", "Clínica", "Óptica", "Laboratorio", "Odontología", "Estética"],
+            "Estilo y Estética": ["Peluquería", "Barbería", "Tienda de Ropa", "Calzado", "Accesorios", "Maquillaje", "Manicura", "Tatuajes", "Sastrería"],
+            "Hogar y Construcción": ["Ferretería", "Pinturas", "Mueblería", "Decoración", "Iluminación", "Carpintería", "Plomería", "Electricidad", "Vidriería"],
+            "Motor e Industria": ["Mecánica", "Repuestos", "Autolavado", "Latonería", "Venta de Vehículos", "Cauchería", "Lubricantes", "Baterías", "Electromecánica"],
+            "Insumos y Distribución": ["Mayorista", "Embalajes", "Limpieza", "Papelería", "Tecnología", "Seguridad", "Transporte", "Fletes", "Almacenaje"],
+            "Indefinido": ["Otros", "Servicios Varios", "Emprendimiento Nuevo"]
+        };
 
         let rotations = new Array(7).fill(0);
-        let map;
+        let userCoords = null;
+        let map = null;
+
+        function irA(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            if(screenId === 'map-view' && map) setTimeout(() => map.invalidateSize(), 200);
+        }
 
         async function inicializarApp() {
-            const { data: catDB } = await _supabase.from('categorias').select('*').eq('grupo', 'Gastronomía').order('orden', { ascending: true });
             const root = document.getElementById('dials-root');
+            root.innerHTML = ""; // Limpiar
+            
+            // Intentar traer datos pero sin bloquear el resto si falla
+            let catDB = [];
+            try {
+                const response = await _supabase.from('categorias').select('*').eq('grupo', 'Gastronomía').order('orden', { ascending: true });
+                if (response.data) catDB = response.data;
+            } catch (e) { console.log("Usando datos locales por defecto"); }
 
             dialConfig.forEach((config, dIdx) => {
                 const wrapper = document.createElement('div');
@@ -185,91 +171,93 @@ input, select {
                     let content = `<div style="font-size:1.3rem">📍</div><span class="item-text">PRÓXIMAMENTE</span>`;
                     let label = "Próximamente";
                     
-                    if (dIdx === 0 && catDB && catDB[i]) {
+                    if (dIdx === 0 && catDB[i]) {
                         label = catDB[i].nombre;
-                        let img = label === "Panadería" ? "https://zuknitfklgiuoipnjraj.supabase.co/storage/v1/object/public/imagenes-cerk/Panaderia.jpg" : catDB[i].imagen_url;
-                        content = `<img src="${img}" class="item-img" onerror="this.src='https://via.placeholder.com/150?text=Cerk'"><span class="item-text">${label}</span>`;
+                        let img = label === "Panadería" ? "https://zuknitfklgiuoipnjraj.supabase.co/storage/v1/object/public/imagenes-cerk/Panaderia.jpg" : (catDB[i].imagen_url || "https://via.placeholder.com/150?text=Cerk");
+                        content = `<img src="${img}" class="item-img"><span class="item-text">${label}</span>`;
                     }
-                    itemsHTML += `<div class="carousel__item" onclick="verMapa('${label}')" id="it-${dIdx}-${i}" style="transform: rotateY(${angle}deg) translateZ(185px) rotateY(-${angle}deg)">${content}</div>`;
+                    itemsHTML += `<div class="carousel__item" onclick="verMapa('${label}')" style="transform: rotateY(${angle}deg) translateZ(185px) rotateY(-${angle}deg)">${content}</div>`;
                 }
                 wrapper.innerHTML = `<div class="dial-label">${config.name}</div><div class="scene"><div class="carousel" id="car-${dIdx}">${itemsHTML}</div></div>`;
                 root.appendChild(wrapper);
                 setupCarouselLogic(dIdx);
             });
-            map = L.map('map').setView([7.767, -72.230], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        }
-If (!navigator.geolocation) {
-        alert("Tu navegador no soporta GPS.");
-        return;
-    }
 
-    navigator.geolocation.getCurrentPosition(
-        (pos) => {
-            userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            
-            // Éxito: Texto amable y color verde
-            status.innerText = "✅ Ubicación lista";
-            status.style.color = "#2ecc71";
-            status.style.fontWeight = "bold";
-            
-            // El botón también se pone verde
-            if(btn) {
-                btn.style.background = "#2ecc71";
-                btn.style.borderColor = "#2ecc71";
+            // Mapa corregido
+            if (!map) {
+                map = L.map('map').setView([7.767, -72.230], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             }
-        },
-        (err) => {
-            alert("❌ Error: Por favor activa el GPS.");
-            status.innerText = "No capturada";
-            status.style.color = "#d63031";
-        },
-        { 
-            enableHighAccuracy: false, // Relajamos la exigencia de satélites puros
-            timeout: 15000,            // Le damos 15 segundos para pensar
-            maximumAge: 0              // Obligamos a que busque la posición de AHORA
+
+            // Quitar intro
+            setTimeout(() => {
+                document.getElementById('intro-screen').classList.add('fade-out');
+                irA('main-ui');
+            }, 1500);
         }
-    );
-} // Aquí terminaba obtenerGPS correctamente
 
-async function finalizarRegistro() {
-    const nombre = document.getElementById('reg-nombre').value;
-    const dial = document.getElementById('sel-dial').value;
-    const tipo = document.getElementById('sel-tipo').value;
-    const tlf = document.getElementById('reg-tel').value;
-    const fotos = document.getElementById('reg-fotos').files;
-
-    if (!nombre || !dial || !tipo || !tlf) {
-        alert("❌ Por favor, rellena todos los campos.");
-        return;
-    }
-
-    if (!userCoords) {
-        alert("📍 Es obligatorio capturar la ubicación GPS del local.");
-        return;
-    }
-
-    if (fotos.length < 2 || fotos.length > 3) {
-        alert("📸 Por seguridad y estética, debes subir entre 2 y 3 fotos.");
-        return;
-    }
-
-    // Validación de Peso corregida con su cierre }
-    for (let i = 0; i < fotos.length; i++) {
-        if (fotos[i].size > 1048576) {
-            alert(`⚠️ La foto "${fotos[i].name}" supera el límite de 1MB.`);
-            return;
+        function setupCarouselLogic(idx) {
+            const car = document.getElementById(`car-${idx}`);
+            let startX = 0;
+            car.addEventListener('touchstart', (e) => startX = e.touches[0].clientX);
+            car.addEventListener('touchend', (e) => {
+                const diff = startX - e.changedTouches[0].clientX;
+                if (Math.abs(diff) > 40) {
+                    rotations[idx] += diff > 0 ? -40 : 40;
+                    car.style.transform = `rotateY(${rotations[idx]}deg)`;
+                }
+            });
         }
-    } // <-- Esta llave faltaba y rompía todo
 
-    alert("🚀 ¡Datos validados con éxito!");
-    
-    const mensaje = `Hola! Quiero activar mi comercio:%0A- Nombre: ${nombre}%0A- Dial: ${dial}%0A- Tipo: ${tipo}%0A- Ubicación: ${userCoords.lat}, ${userCoords.lng}`;
-    
-    const tuNumero = "584247126548"; 
-    window.location.href = `https://wa.me/${tuNumero}?text=${mensaje}`;
-}
+        function actualizarSubcategorias() {
+            const dial = document.getElementById('sel-dial').value;
+            const combo = document.getElementById('sel-tipo');
+            combo.innerHTML = "";
+            if (subcategorias[dial]) {
+                subcategorias[dial].forEach(s => {
+                    let opt = document.createElement('option');
+                    opt.value = s; opt.innerText = s;
+                    combo.appendChild(opt);
+                });
+            }
+        }
 
+        function obtenerGPS() {
+            const status = document.getElementById('gps-status');
+            const btn = document.getElementById('btn-gps-main');
+            if (!navigator.geolocation) return alert("GPS no soportado");
+            
+            status.innerText = "Buscando...";
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    status.innerText = "✅ Ubicación lista";
+                    status.style.color = "#2ecc71";
+                    btn.style.background = "#2ecc71";
+                },
+                () => alert("Activa el GPS para continuar"),
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        function verMapa(label) {
+            document.getElementById('map-title').innerText = label;
+            irA('map-view');
+        }
+
+        async function finalizarRegistro() {
+            const nombre = document.getElementById('reg-nombre').value;
+            const dial = document.getElementById('sel-dial').value;
+            const tipo = document.getElementById('sel-tipo').value;
+            const tlf = document.getElementById('reg-tel').value;
+            const fotos = document.getElementById('reg-fotos').files;
+
+            if (!nombre || !dial || !tipo || !tlf || !userCoords) return alert("Por favor completa todos los campos y el GPS.");
+            if (fotos.length < 2) return alert("Sube al menos 2 fotos.");
+
+            const mensaje = `Hola! Quiero activar mi comercio:%0A- Nombre: ${nombre}%0A- Dial: ${dial}%0A- Tipo: ${tipo}%0A- Ubicación: ${userCoords.lat}, ${userCoords.lng}`;
+            window.location.href = `https://wa.me/584247126548?text=${mensaje}`;
+        }
 
         window.onload = inicializarApp;
     </script>
