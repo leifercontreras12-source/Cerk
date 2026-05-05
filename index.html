@@ -258,80 +258,103 @@ function obtenerGPS() {
     const btn = document.querySelector('.btn-gps');
     
     status.innerText = "⌛ Buscando tu local...";
-    
-    if (!navigator.geolocation) {
-        alert("Tu navegador no soporta GPS.");
-        return;
-    }
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    navigator.geolocation.getCurrentPosition(
-        (pos) => {
-            userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            
-            // Éxito: Texto amable y color verde
-            status.innerText = "✅ Ubicación lista";
-            status.style.color = "#2ecc71";
-            status.style.fontWeight = "bold";
-            
-            // El botón también se pone verde
-            if(btn) {
-                btn.style.background = "#2ecc71";
-                btn.style.borderColor = "#2ecc71";
-            }
-        },
-        (err) => {
-            alert("❌ Error: Por favor activa el GPS.");
-            status.innerText = "No capturada";
-            status.style.color = "#d63031";
-        },
-        { 
-            enableHighAccuracy: false, // Relajamos la exigencia de satélites puros
-            timeout: 15000,            // Le damos 15 segundos para pensar
-            maximumAge: 0              // Obligamos a que busque la posición de AHORA
-        }
-    );
-} // Aquí terminaba obtenerGPS correctamente
+<script>
+// 2. Configuración de conexión (Usa tus llaves aquí)
+const supabaseUrl = 'TU_URL_DE_SUPABASE';
+const supabaseKey = 'TU_ANON_KEY';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+// ... (Aquí va tu función obtenerGPS que ya tienes) ...
 
 async function finalizarRegistro() {
+    const btnRegistro = document.querySelector("button[onclick='finalizarRegistro()']");
     const nombre = document.getElementById('reg-nombre').value;
     const dial = document.getElementById('sel-dial').value;
     const tipo = document.getElementById('sel-tipo').value;
     const tlf = document.getElementById('reg-tel').value;
+    const direccion = document.getElementById('reg-direccion')?.value || "No provista"; // Ajustado a tu nueva columna
     const fotos = document.getElementById('reg-fotos').files;
 
+    // VALIDACIONES
     if (!nombre || !dial || !tipo || !tlf) {
         alert("❌ Por favor, rellena todos los campos.");
         return;
     }
-
     if (!userCoords) {
-        alert("📍 Es obligatorio capturar la ubicación GPS del local.");
+        alert("📍 Es obligatorio capturar la ubicación GPS.");
         return;
     }
-
     if (fotos.length < 2 || fotos.length > 3) {
-        alert("📸 Por seguridad y estética, debes subir entre 2 y 3 fotos.");
+        alert("📸 Sube entre 2 y 3 fotos.");
         return;
     }
 
-    // Validación de Peso corregida con su cierre }
+    // Validación de peso
     for (let i = 0; i < fotos.length; i++) {
         if (fotos[i].size > 1048576) {
-            alert(`⚠️ La foto "${fotos[i].name}" supera el límite de 1MB.`);
+            alert(`⚠️ La foto "${fotos[i].name}" es muy pesada (máx 1MB).`);
             return;
         }
-    } // <-- Esta llave faltaba y rompía todo
+    }
 
-    alert("🚀 ¡Datos validados con éxito!");
-    
-    const mensaje = `Hola! Quiero activar mi comercio:%0A- Nombre: ${nombre}%0A- Dial: ${dial}%0A- Tipo: ${tipo}%0A- Ubicación: ${userCoords.lat}, ${userCoords.lng}`;
-    
-    const tuNumero = "584247126548"; 
-    window.location.href = `https://wa.me/${tuNumero}?text=${mensaje}`;
+    try {
+        // Bloqueamos el botón para evitar doble click
+        btnRegistro.disabled = true;
+        btnRegistro.innerText = "⏳ Procesando registro... un momento";
+
+        let fotosSubidasUrls = [];
+
+        // 3. SUBIDA DE FOTOS AL BUCKET
+        for (let i = 0; i < fotos.length; i++) {
+            const file = fotos[i];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}_${i}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            const { data, error: uploadError } = await supabase.storage
+                .from('fotos-comercios')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            // Obtenemos la URL pública de la foto
+            const { data: { publicUrl } } = supabase.storage
+                .from('fotos-comercios')
+                .getPublicUrl(filePath);
+            
+            fotosSubidasUrls.push(publicUrl);
+        }
+
+        // 4. GUARDAR EN LA TABLA COMERCIOS
+        const { error: insertError } = await supabase
+            .from('Comercios')
+            .insert([{
+                Nombre: nombre,
+                Dial: dial,
+                Tipo: tipo,
+                WhatsApp: tlf,
+                "Dirección Exacta": direccion,
+                Latitud: userCoords.lat,
+                Longitud: userCoords.lng,
+                fotos_urls: fotosSubidasUrls,
+                pago_confirmado: false // Entra como pendiente
+            }]);
+
+        if (insertError) throw insertError;
+
+        // 5. ÉXITO Y SALTO A WHATSAPP
+        const mensaje = `¡Hola! Acabo de registrar mi comercio en +CERK.%0A%0A*Detalles:*%0A- Comercio: ${nombre}%0A- Categoría: ${tipo}%0A%0A_Espero los datos para el pago y activar mi registro._`;
+        const tuNumero = "584247126548"; 
+        
+        window.location.href = `https://wa.me/${tuNumero}?text=${mensaje}`;
+
+    } catch (error) {
+        console.error("Error detallado:", error);
+        alert("❌ Error al registrar: " + error.message);
+        btnRegistro.disabled = false;
+        btnRegistro.innerText = "Activar y Pagar";
+    }
 }
-
-
-        window.onload = inicializarApp;
-    </script>
-</body>
-</html>
+</script>
