@@ -199,112 +199,79 @@ input, select {
             map = L.map('map').setView([7.767, -72.230], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         }
+If (!navigator.geolocation) {
+        alert("Tu navegador no soporta GPS.");
+        return;
+    }
 
-        function setupCarouselLogic(dIdx) {
-            const car = document.getElementById(`car-${dIdx}`);
-            let startX = 0, currentRot = 0, moved = false;
-            car.addEventListener('touchstart', e => { startX = e.touches[0].pageX; currentRot = rotations[dIdx]; car.style.transition = 'none'; moved = false; }, {passive: true});
-            car.addEventListener('touchmove', e => { 
-                let delta = (e.touches[0].pageX - startX) * 0.7; 
-                if(Math.abs(delta) > 5) moved = true;
-                updateRot(dIdx, currentRot + delta); 
-            }, {passive: true});
-            car.addEventListener('touchend', () => {
-                if(!moved) return;
-                rotations[dIdx] = Math.round(rotations[dIdx] / 40) * 40;
-                car.style.transition = 'transform 0.5s ease-out';
-                updateRot(dIdx, rotations[dIdx]);
-            });
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            
+            // Éxito: Texto amable y color verde
+            status.innerText = "✅ Ubicación lista";
+            status.style.color = "#2ecc71";
+            status.style.fontWeight = "bold";
+            
+            // El botón también se pone verde
+            if(btn) {
+                btn.style.background = "#2ecc71";
+                btn.style.borderColor = "#2ecc71";
+            }
+        },
+        (err) => {
+            alert("❌ Error: Por favor activa el GPS.");
+            status.innerText = "No capturada";
+            status.style.color = "#d63031";
+        },
+        { 
+            enableHighAccuracy: false, // Relajamos la exigencia de satélites puros
+            timeout: 15000,            // Le damos 15 segundos para pensar
+            maximumAge: 0              // Obligamos a que busque la posición de AHORA
         }
-    } } // <--- Esta es la llave que cierra setupCarouselLogic
-
-// --- AQUÍ COMIENZA EL SELLO DEL ARCHIVO ---
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
-
-<script>
-// Configuración de conexión limpia
-const _URL = 'https://zuknitfklgiuoipnjraj.supabase.co';
-const _KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo';
-const supabase = window.supabase.createClient(_URL, _KEY);
+    );
+} // Aquí terminaba obtenerGPS correctamente
 
 async function finalizarRegistro() {
-    const btn = document.querySelector("button[onclick='finalizarRegistro()']");
     const nombre = document.getElementById('reg-nombre').value;
     const dial = document.getElementById('sel-dial').value;
     const tipo = document.getElementById('sel-tipo').value;
     const tlf = document.getElementById('reg-tel').value;
-    const direccion = document.getElementById('reg-direccion')?.value || "Sin dirección";
     const fotos = document.getElementById('reg-fotos').files;
 
-    if (!nombre || !tlf || !userCoords) {
-        alert("❌ Error: Falta capturar GPS o rellenar datos.");
-        return;
-    }
-    if (fotos.length < 2) {
-        alert("📸 Sube al menos 2 fotos.");
+    if (!nombre || !dial || !tipo || !tlf) {
+        alert("❌ Por favor, rellena todos los campos.");
         return;
     }
 
-    try {
-        btn.disabled = true;
-        btn.innerText = "⏳ Subiendo fotos...";
+    if (!userCoords) {
+        alert("📍 Es obligatorio capturar la ubicación GPS del local.");
+        return;
+    }
 
-        let urls = [];
-        for (let i = 0; i < fotos.length; i++) {
-            const ext = fotos[i].name.split('.').pop();
-            const path = `${Date.now()}_${i}.${ext}`;
-            
-            const { data: upData, error: upErr } = await supabase.storage
-                .from('fotos-comercios')
-                .upload(path, fotos[i]);
+    if (fotos.length < 2 || fotos.length > 3) {
+        alert("📸 Por seguridad y estética, debes subir entre 2 y 3 fotos.");
+        return;
+    }
 
-            if (upErr) throw upErr;
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('fotos-comercios')
-                .getPublicUrl(path);
-            
-            urls.push(publicUrl);
+    // Validación de Peso corregida con su cierre }
+    for (let i = 0; i < fotos.length; i++) {
+        if (fotos[i].size > 1048576) {
+            alert(`⚠️ La foto "${fotos[i].name}" supera el límite de 1MB.`);
+            return;
         }
+    } // <-- Esta llave faltaba y rompía todo
 
-        btn.innerText = "💾 Guardando datos...";
-        const { error: insErr } = await supabase
-            .from('Comercios')
-            .insert([{
-                Nombre: nombre,
-                Dial: dial,
-                Tipo: tipo,
-                WhatsApp: tlf,
-                "Dirección Exacta": direccion,
-                Latitud: userCoords.lat,
-                Longitud: userCoords.lng,
-                fotos_urls: urls,
-                pago_confirmado: false
-            }]);
-
-        if (insErr) throw insErr;
-
-        // Salto final a WhatsApp
-        const msg = `¡Hola! Registro listo para: ${nombre}. Ya subí los datos a +CERK.`;
-        window.location.href = `https://wa.me/584247126548?text=${encodeURIComponent(msg)}`;
-
-    } catch (e) {
-        alert("❌ Error crítico: " + e.message);
-        btn.disabled = false;
-        btn.innerText = "ACTIVAR Y PAGAR";
-    }
+    alert("🚀 ¡Datos validados con éxito!");
+    
+    const mensaje = `Hola! Quiero activar mi comercio:%0A- Nombre: ${nombre}%0A- Dial: ${dial}%0A- Tipo: ${tipo}%0A- Ubicación: ${userCoords.lat}, ${userCoords.lng}`;
+    
+    const tuNumero = "584247126548"; 
+    window.location.href = `https://wa.me/${tuNumero}?text=${mensaje}`;
 }
 
-// Forzamos el arranque de la interfaz
-window.addEventListener('load', () => {
-    if (typeof inicializarApp === 'function') {
-        inicializarApp();
-    } else {
-        console.error("La función inicializarApp no se encontró.");
-    }
-});
-</script>
+
+        window.onload = inicializarApp;
+    </script>
 </body>
 </html>
