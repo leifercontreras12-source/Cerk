@@ -85,26 +85,62 @@ input, select {
         </div>
     </div>
 
-    <div id="register-ui" class="screen" style="background: var(--bg-base);">
-        <div class="form-container">
-            <h2 style="text-align:center; margin-top:0;">Nuevo Comercio</h2>
-            <div class="form-group"><label>Nombre</label><input type="text" id="reg-nombre"></div>
-            <div class="form-group"><label>Dial</label>
-                <select id="sel-dial" onchange="actualizarSubcategorias()">
-                    <option value="">Selecciona Dial...</option>
-                    <option value="Gastronomía">Gastronomía</option>
-                    <option value="Salud y Bienestar">Salud y Bienestar</option>
-                    <option value="Estilo y Estética">Estilo y Estética</option>
-                    <option value="Hogar y Construcción">Hogar y Construcción</option>
-                </select>
-            </div>
-            <div class="form-group"><label>Tipo</label><select id="sel-tipo"><option>Elige un dial...</option></select></div>
-            <div class="form-group"><label>WhatsApp</label><input type="tel" id="reg-tel"></div>
-            <div class="form-group"><label>Horario</label><input type="text" id="reg-horario"></div>
-            <button class="btn-main" onclick="finalizarRegistro()">ACTIVAR Y PAGAR</button>
-            <button onclick="irA('main-ui')" style="background:none; border:none; margin-top:10px; width:100%; font-weight:bold; color:var(--navy);">CANCELAR</button>
+    <div id="register-ui" class="screen" style="background: #f4f7f9;">
+    <div class="form-container">
+        <h2 style="text-align:center; color:#1a3a5f; margin-top:0;">Nuevo Comercio</h2>
+        
+        <div class="form-group">
+            <label>Nombre del Comercio</label>
+            <input type="text" id="reg-nombre" placeholder="Ej: Panadería El Sol">
         </div>
+
+        <div class="form-group">
+            <label>Principio de la Marcación (Dial)</label>
+            <select id="sel-dial" onchange="actualizarSubcategorias()">
+                <option value="">Selecciona...</option>
+                <option value="Gastronomía">1. Gastronomía</option>
+                <option value="Salud y Bienestar">2. Salud y Bienestar</option>
+                <option value="Estilo y Estética">3. Estilo y Estética</option>
+                <option value="Hogar y Construcción">4. Hogar y Construcción</option>
+                <option value="Motor e Industria">5. Motor e Industria</option>
+                <option value="Insumos y Distribución">6. Insumos y Distribución</option>
+                <option value="Indefinido">7. Indefinido</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>¿Qué tipo de negocio es?</label>
+            <select id="sel-tipo">
+                <option value="">Primero elige un dial...</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>WhatsApp</label>
+            <input type="tel" id="reg-tel" placeholder="Ej: 04121234567">
+        </div>
+
+        <div class="form-group">
+            <label>Horario de Trabajo</label>
+            <input type="text" id="reg-horario" placeholder="Ej: 8:00 - 12:00 / 14:00 - 18:00">
+        </div>
+
+        <div class="form-group">
+            <label>Fotos (Máx. 3 - 1MB c/u)</label>
+            <input type="file" id="reg-fotos" multiple accept="image/*">
+        </div>
+
+        <div class="gps-container">
+            <button class="btn-gps" onclick="obtenerGPS()">Capturar Ubicación GPS</button>
+            <span id="gps-status" style="display:block; margin-top:5px; font-size:0.7rem;">No capturada</span>
+            <span class="warning-text">¡Hazlo desde el físico local para precisión!</span>
+        </div>
+
+        <button class="btn-main" onclick="finalizarRegistro()">ACTIVAR Y PAGAR</button>
+        <button onclick="irA('main-ui')" style="background:none; border:none; color:#1a3a5f; width:100%; margin-top:15px; font-weight:bold; cursor:pointer;">VOLVER ATRÁS</button>
     </div>
+</div>
+
 
     <div id="map-view" class="screen">
         <div class="map-header"><span id="map-title">MAPA</span><button onclick="irA('main-ui')" style="background:var(--accent); border:none; color:white; padding:5px 10px; border-radius:5px;">CERRAR</button></div>
