@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYP html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -289,45 +289,96 @@ input, select {
 }
 
         async function finalizarRegistro() {
-    const nombre = document.getElementById('reg-nombre').value;
-    const dial = document.getElementById('sel-dial').value;
-    const tipo = document.getElementById('sel-tipo').value;
-    const tlf = document.getElementById('reg-tel').value;
-    const fotos = document.getElementById('reg-fotos').files;
+    // 1. Referencias a los elementos
+    const btn = document.querySelector("button[onclick='finalizarRegistro()']");
+    const nombre = document.getElementById('reg-nombre')?.value;
+    const dial = document.getElementById('sel-dial')?.value;
+    const tipo = document.getElementById('sel-tipo')?.value;
+    const tlf = document.getElementById('reg-tel')?.value;
+    const direccion = document.getElementById('reg-direccion')?.value || "No provista";
+    const fotosInput = document.getElementById('reg-fotos');
+    const fotos = fotosInput ? fotosInput.files : [];
 
-    if (!nombre || !dial || !tipo || !tlf) {
-        alert("❌ Por favor, rellena todos los campos.");
+    // 2. VALIDACIÓN: Formulario vacío
+    if (!nombre || !tlf || !tipo) {
+        alert("⚠️ Por favor, llena el formulario primero.");
         return;
     }
 
-    if (!userCoords) {
+    // 3. VALIDACIÓN: GPS obligatorio
+    if (typeof userCoords === 'undefined' || !userCoords) {
         alert("📍 Es obligatorio capturar la ubicación GPS del local.");
         return;
     }
 
-        // 3. Validación de Cantidad (Mínimo 2, Máximo 3)
+    // 4. VALIDACIÓN: Cantidad de fotos (Mínimo 2, Máximo 3)
     if (fotos.length < 2 || fotos.length > 3) {
-        alert("📸 Por seguridad y estética, debes subir entre 2 y 3 fotos.");
+        alert("📸 Debes seleccionar mínimo 2 y máximo 3 fotos.");
         return;
     }
 
-    // 4. Validación de Peso (Máximo 1MB por foto)
+    // 5. VALIDACIÓN: Peso de fotos (Máximo 1MB por cada una)
     for (let i = 0; i < fotos.length; i++) {
-        if (fotos[i].size > 1048576) {
-            alert(`⚠️ La foto "${fotos[i].name}" es muy pesada. El máximo permitido es 1MB.`);
+        if (fotos[i].size > 1048576) { // 1MB en bytes
+            alert(`⚠️ La foto "${fotos[i].name}" es muy pesada. Máximo 1MB.`);
             return;
         }
     }
 
-    alert("🚀 ¡Datos validados con éxito!");
-    
-    const mensaje = `Hola! Quiero activar mi comercio:%0A- Nombre: ${nombre}%0A- Dial: ${dial}%0A- Tipo: ${tipo}%0A- Ubicación: ${userCoords.lat}, ${userCoords.lng}`;
-    
-    const tuNumero = "584247126548"; 
-    window.location.href = `https://wa.me/${tuNumero}?text=${mensaje}`;
+    try {
+        // Bloqueo del botón para evitar duplicados
+        btn.disabled = true;
+        btn.innerText = "⏳ Procesando registro...";
+
+        let fotosSubidasUrls = [];
+
+        // 6. SUBIDA A BUCKET (fotos-comercios)
+        for (let i = 0; i < fotos.length; i++) {
+            const file = fotos[i];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}_${i}.${fileExt}`;
+
+            const { data, error: uploadError } = await _supabase.storage
+                .from('fotos-comercios')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = _supabase.storage
+                .from('fotos-comercios')
+                .getPublicUrl(fileName);
+            
+            fotosSubidasUrls.push(publicUrl);
+        }
+
+        // 7. GUARDADO EN TABLA (Comercios)
+        const { error: insertError } = await _supabase
+            .from('Comercios')
+            .insert([{
+                Nombre: nombre,
+                Dial: dial,
+                Tipo: tipo,
+                WhatsApp: tlf,
+                "Dirección Exacta": direccion,
+                Latitud: userCoords.lat,
+                Longitud: userCoords.lng,
+                fotos_urls: fotosSubidasUrls,
+                pago_confirmado: false
+            }]);
+
+        if (insertError) throw insertError;
+
+        // 8. ÉXITO: Salto a WhatsApp
+        const mensaje = `¡Hola! Acabo de registrar mi comercio: *${nombre}*. Ya subí los datos y las fotos al sistema +CERK.`;
+        window.location.href = `https://wa.me/584247126548?text=${encodeURIComponent(mensaje)}`;
+
+    } catch (error) {
+        console.error("Error:", error);
+        alert("❌ Error: " + (error.message || "No se pudo conectar con Supabase"));
+        btn.disabled = false;
+        btn.innerText = "ACTIVAR Y PAGAR";
+    }
 }
-
-
 
         window.onload = inicializarApp;
     </script>
