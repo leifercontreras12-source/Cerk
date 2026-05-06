@@ -256,6 +256,7 @@ input, select {
         function obtenerGPS() {
     const status = document.getElementById('gps-status');
     const btn = document.querySelector('.btn-gps');
+    
     status.innerText = "⌛ Buscando tu local...";
     
     if (!navigator.geolocation) {
@@ -266,17 +267,22 @@ input, select {
     navigator.geolocation.getCurrentPosition(
         (pos) => {
             userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            
+            // Éxito: Texto y color verde esmeralda
             status.innerText = "✅ Ubicación lista";
-            status.style.color = "#2ecc71";
+            status.style.color = "#27ae60";
+            status.style.fontWeight = "bold";
+            
+            // El botón también se transforma
             if(btn) {
-                btn.style.background = "#2ecc71";
-                btn.style.borderColor = "#2ecc71";
+                btn.style.background = "#27ae60";
                 btn.innerText = "📍 UBICACIÓN REGISTRADA";
             }
         },
         (err) => {
-            alert("❌ Error: Activa el GPS");
+            alert("❌ Error: Por favor activa el GPS de tu equipo.");
             status.innerText = "No capturada";
+            status.style.color = "#d63031";
         },
         { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -299,24 +305,25 @@ input, select {
         return;
     }
 
+        // 3. Validación de Cantidad (Mínimo 2, Máximo 3)
     if (fotos.length < 2 || fotos.length > 3) {
         alert("📸 Por seguridad y estética, debes subir entre 2 y 3 fotos.");
         return;
     }
 
-    // Validación de Peso corregida con su cierre }
+    // 4. Validación de Peso (Máximo 1MB por foto)
     for (let i = 0; i < fotos.length; i++) {
         if (fotos[i].size > 1048576) {
-            alert(`⚠️ La foto "${fotos[i].name}" supera el límite de 1MB.`);
+            alert(`⚠️ La foto "${fotos[i].name}" es muy pesada. El máximo permitido es 1MB.`);
             return;
         }
-    } // <-- Esta llave faltaba y rompía todo
+    }
 
     alert("🚀 ¡Datos validados con éxito!");
     
     const mensaje = `Hola! Quiero activar mi comercio:%0A- Nombre: ${nombre}%0A- Dial: ${dial}%0A- Tipo: ${tipo}%0A- Ubicación: ${userCoords.lat}, ${userCoords.lng}`;
     
-    const tuNumero = "5948291637911"; 
+    const tuNumero = "584247126548"; 
     window.location.href = `https://wa.me/${tuNumero}?text=${mensaje}`;
 }
 
