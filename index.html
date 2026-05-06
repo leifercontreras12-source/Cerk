@@ -339,13 +339,13 @@ input, select {
             const fileName = `${Date.now()}_${i}.${fileExt}`;
 
             const { data, error: uploadError } = await _supabase.storage
-                .from('fotos-comercios')
+                .from('imagenes_comercios')
                 .upload(fileName, file);
 
             if (uploadError) throw uploadError;
 
             const { data: { publicUrl } } = _supabase.storage
-                .from('imagenes-comercios')
+                .from('imagenes_comercios')
                 .getPublicUrl(fileName);
             
             fotosSubidasUrls.push(publicUrl);
