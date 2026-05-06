@@ -295,7 +295,7 @@ input, select {
     const dial = document.getElementById('sel-dial')?.value;
     const tipo = document.getElementById('sel-tipo')?.value;
     const tlf = document.getElementById('reg-tel')?.value;
-    const direccion = document.getElementById('reg-Horario')?.value || "No provista";
+    const valorHorario = document.getElementById('reg-horario')?.value || "No provista";
     const fotosInput = document.getElementById('reg-fotos');
     const fotos = fotosInput ? fotosInput.files : [];
 
@@ -359,7 +359,7 @@ input, select {
                 Dial: dial,
                 Tipo: tipo,
                 WhatsApp: tlf,
-                Horario: Horario,
+                Horario: valorHorario,
                 Latitud: userCoords.lat,
                 Longitud: userCoords.lng,
                 fotos_urls: fotosSubidasUrls,
