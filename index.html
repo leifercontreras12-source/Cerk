@@ -272,10 +272,20 @@ input, select {
         return; // Se detiene aquí
     }
 
-    if (fotos.length === 0) {
-        alert("📸 Debes subir al menos 2 fotos de tu comercio.");
-        return; // Se detiene aquí
+        // 3. Validación de Cantidad (Mínimo 2, Máximo 3)
+    if (fotos.length < 2 || fotos.length > 3) {
+        alert("📸 Por seguridad y estética, debes subir entre 2 y 3 fotos.");
+        return;
     }
+
+    // 4. Validación de Peso (Máximo 1MB por foto)
+    for (let i = 0; i < fotos.length; i++) {
+        if (fotos[i].size > 1048576) {
+            alert(`⚠️ La foto "${fotos[i].name}" es muy pesada. El máximo permitido es 1MB.`);
+            return;
+        }
+    }
+
 
     // 3. Si todo está bien, procedemos
     alert("🚀 ¡Datos validados con éxito! Ahora te redirigiremos a WhatsApp para confirmar tu pago.");
