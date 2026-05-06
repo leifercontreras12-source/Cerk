@@ -267,10 +267,30 @@ input, select {
         return; // Se detiene aquí
     }
 
-    if (!userCoords) {
-        alert("📍 Es obligatorio capturar la ubicación GPS del local.");
-        return; // Se detiene aquí
+    function obtenerGPS() {
+    const status = document.getElementById('gps-status');
+    status.innerText = "⏳ Localizando...";
+    
+    if (!navigator.geolocation) {
+        alert("Tu navegador no soporta GPS.");
+        return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            status.innerText = "✅ Ubicación Capturada";
+            status.style.color = "#00b4d8";
+            status.style.fontWeight = "bold";
+        },
+        (err) => {
+            alert("❌ Error: Por favor activa el GPS de tu celular.");
+            status.innerText = "No capturada";
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
 
         // 3. Validación de Cantidad (Mínimo 2, Máximo 3)
     if (fotos.length < 2 || fotos.length > 3) {
