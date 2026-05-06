@@ -269,7 +269,9 @@ input, select {
 
     function obtenerGPS() {
     const status = document.getElementById('gps-status');
-    status.innerText = "⏳ Localizando...";
+    const btn = document.querySelector('.btn-gps');
+    
+    status.innerText = "⌛ Buscando tu local...";
     
     if (!navigator.geolocation) {
         alert("Tu navegador no soporta GPS.");
@@ -279,13 +281,22 @@ input, select {
     navigator.geolocation.getCurrentPosition(
         (pos) => {
             userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            status.innerText = "✅ Ubicación Capturada";
-            status.style.color = "#00b4d8";
+            
+            // Éxito: Texto amable y color verde
+            status.innerText = "✅ Ubicación lista";
+            status.style.color = "#2ecc71";
             status.style.fontWeight = "bold";
+            
+            // El botón también se pone verde
+            if(btn) {
+                btn.style.background = "#2ecc71";
+                btn.style.borderColor = "#2ecc71";
+            }
         },
         (err) => {
-            alert("❌ Error: Por favor activa el GPS de tu celular.");
+            alert("❌ Error: Por favor activa el GPS.");
             status.innerText = "No capturada";
+            status.style.color = "#d63031";
         },
         { enableHighAccuracy: true, timeout: 10000 }
     );
