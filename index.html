@@ -116,9 +116,15 @@ input, select {
         </div>
 
         <div class="form-group">
-            <label>WhatsApp</label>
-            <input type="tel" id="reg-tel" placeholder="Ej: 04121234567">
-        </div>
+    <label>WhatsApp</label>
+    <input 
+        type="tel" 
+        id="reg-tel" 
+        placeholder="Ej: 04121234567"
+        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+    >
+</div>
+
 
         <div class="form-group">
             <label>Horario de Trabajo</label>
