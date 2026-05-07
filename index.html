@@ -250,22 +250,79 @@ let label = nombreReal;
             if(subcategorias[dial]) subcategorias[dial].forEach(s => tipo.innerHTML += `<option value="${s}">${s}</option>`);
         }
 
-        function verMapa(label) {
-            document.getElementById('map-title').innerText = label.toUpperCase();
-            irA('map-view');
+        async function verMapa(labelRaw) {
+    // 1. Normalizar texto: "MAYORISTA" -> "Mayorista"
+    const label = labelRaw.charAt(0).toUpperCase() + labelRaw.slice(1).toLowerCase();
+    document.getElementById('map-title').innerText = label.toUpperCase();
+    irA('map-view');
+
+    // 2. Obtener Ubicación del Usuario
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const uLat = pos.coords.latitude;
+        const uLon = pos.coords.longitude;
+
+        // Centrar mapa en usuario y poner marcador azul
+        map.setView([uLat, uLon], 15);
+        L.circle([uLat, uLon], { radius: 20, color: 'blue' }).addTo(map).bindPopup("Tu ubicación").openPopup();
+
+        // 3. Consultar Supabase
+        const { data: Comercios, error } = await _supabase
+            .from('Comercios')
+            .select('*')
+            .eq('Tipo', label);
+
+        if (error || !Comercios) return;
+
+        // 4. Lógica de Acumulador Progresivo
+        let encontrados = Comercios.map(c => {
+            c.distancia = calcularDistancia(uLat, uLon, parseFloat(c.latitud), parseFloat(c.longitud));
+            return c;
+        }).sort((a, b) => a.distancia - b.distancia);
+
+        let mostrar = [];
+        const radios = [0.3, 0.8, 1.5]; // Radios en km
+
+        for (let r of radios) {
+            mostrar = encontrados.filter(c => c.distancia <= r);
+            if (mostrar.length >= 3) break; 
         }
+
+        // 5. Pintar en el Mapa
+        const markersLayer = L.layerGroup().addTo(map);
+        mostrar.forEach(c => {
+            L.marker([parseFloat(c.latitud), parseFloat(c.longitud)])
+                .addTo(markersLayer)
+                .bindPopup(`<b>${c.Nombre}</b><br>Distancia: ${(c.distancia * 1000).toFixed(0)}m`);
+        });
+
+        // 6. Mensaje de Cortesía
+        if (mostrar.length < 3) {
+            setTimeout(() => {
+                const global = confirm(`Solo encontramos ${mostrar.length} comercios a menos de 1.5 km. ¿Quieres hacer una búsqueda global?`);
+                if (global) {
+                    encontrados.forEach(c => {
+                        L.marker([parseFloat(c.latitud), parseFloat(c.longitud)])
+                            .addTo(markersLayer)
+                            .bindPopup(`<b>${c.Nombre}</b>`);
+                    });
+                    map.fitBounds(encontrados.map(c => [c.latitud, c.longitud]));
+                } else {
+                    alert("Ok, intenta con otra categoría.");
+                    irA('dials-view'); // O el ID de tu vista de diales
+                }
+            }, 1000);
+        }
+
+    }, () => {
+        alert("Por favor, activa el GPS para encontrar comercios cerca de ti.");
+    });
+}
         
         function obtenerGPS() {
     const status = document.getElementById('gps-status');
     const btn = document.querySelector('.btn-gps');
     
     status.innerText = "⌛ Buscando tu local...";
-    
-    if (!navigator.geolocation) {
-        alert("Tu navegador no soporta GPS.");
-        return;
-    }
-
     navigator.geolocation.getCurrentPosition(
         (pos) => {
             userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -380,6 +437,16 @@ let label = nombreReal;
         btn.disabled = false;
         btn.innerText = "ACTIVAR Y PAGAR";
     }
+}
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Radio de la Tierra en km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Retorna distancia en km
 }
 
         window.onload = inicializarApp;
