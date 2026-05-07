@@ -116,14 +116,17 @@ input, select {
         </div>
 
         <div class="form-group">
-    <label>WhatsApp</label>
+    <label>WhatsApp (con código de país)</label>
     <input 
         type="tel" 
         id="reg-tel" 
-        placeholder="Ej: 04121234567"
-        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+        placeholder="Ej: 584121234567 o 573221234567"
+        maxlength="13"
+        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 13)"
     >
+    <small style="color: gray; font-size: 0.8em;">Incluye 58 o 57 al inicio</small>
 </div>
+
 
 
         <div class="form-group">
