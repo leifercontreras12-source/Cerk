@@ -258,35 +258,25 @@ let label = nombreReal;
 
     // 2. Obtener Ubicación del Usuario
     navigator.geolocation.getCurrentPosition(async (pos) => {
-        const uLat = pos.coords.latitude;
-        const uLon = pos.coords.longitude;
+        const uLat = pos.coords.Latitude;
+        const uLon = pos.coords.Longitude;
 
         // Centrar mapa en usuario y poner marcador azul
         map.setView([uLat, uLon], 15);
         L.circle([uLat, uLon], { radius: 20, color: 'blue' }).addTo(map).bindPopup("Tu ubicación").openPopup();
 
         // 3. Consultar Supabase
-                // 3. Consultar Supabase (MODO DIAGNÓSTICO)
-        const { data: Comercios, error } = await _supabase
+                const { data: Comercios, error } = await _supabase
             .from('Comercios')
-            .select('*'); // Quitamos los filtros .eq para que traiga TODO
+            .select('*')
+            .eq('Tipo', label);
 
-        console.log("Datos brutos de Supabase:", Comercios);
-        
-        if (error) {
-            alert("Error de conexión: " + error.message);
-            return;
-        }
-
-        if (!Comercios || Comercios.length === 0) {
-            alert("La tabla 'Comercios' parece estar vacía o bloqueada.");
-            return;
-        }
+        if (error || !Comercios) return;
 
 
         // 4. Lógica de Acumulador Progresivo
         let encontrados = Comercios.map(c => {
-            c.distancia = calcularDistancia(uLat, uLon, parseFloat(c.latitud), parseFloat(c.longitud));
+            c.distancia = calcularDistancia(uLat, uLon, parseFloat(c.Latitud), parseFloat(c.Longitud));
             return c;
         }).sort((a, b) => a.distancia - b.distancia);
 
@@ -301,7 +291,7 @@ let label = nombreReal;
         // 5. Pintar en el Mapa
         const markersLayer = L.layerGroup().addTo(map);
         mostrar.forEach(c => {
-            L.marker([parseFloat(c.latitud), parseFloat(c.longitud)])
+            L.marker([parseFloat(c.Latitud), parseFloat(c.Longitud)])
                 .addTo(markersLayer)
                 .bindPopup(`<b>${c.Nombre}</b><br>Distancia: ${(c.distancia * 1000).toFixed(0)}m`);
         });
@@ -312,11 +302,11 @@ let label = nombreReal;
                 const global = confirm(`Solo encontramos ${mostrar.length} comercios a menos de 1.5 km. ¿Quieres hacer una búsqueda global?`);
                 if (global) {
                     encontrados.forEach(c => {
-                        L.marker([parseFloat(c.latitud), parseFloat(c.longitud)])
+                        L.marker([parseFloat(c.Latitud), parseFloat(c.Longitud)])
                             .addTo(markersLayer)
                             .bindPopup(`<b>${c.Nombre}</b>`);
                     });
-                    map.fitBounds(encontrados.map(c => [c.latitud, c.longitud]));
+                    map.fitBounds(encontrados.map(c => [c.Latitud, c.Longitud]));
                 } else {
                     alert("Ok, intenta con otra categoría.");
                     irA('dials-view'); // O el ID de tu vista de diales
