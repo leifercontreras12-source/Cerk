@@ -266,12 +266,23 @@ let label = nombreReal;
         L.circle([uLat, uLon], { radius: 20, color: 'blue' }).addTo(map).bindPopup("Tu ubicación").openPopup();
 
         // 3. Consultar Supabase
+                // 3. Consultar Supabase (MODO DIAGNÓSTICO)
         const { data: Comercios, error } = await _supabase
             .from('Comercios')
-            .select('*')
-            .eq('Tipo', label);
+            .select('*'); // Quitamos los filtros .eq para que traiga TODO
 
-        if (error || !Comercios) return;
+        console.log("Datos brutos de Supabase:", Comercios);
+        
+        if (error) {
+            alert("Error de conexión: " + error.message);
+            return;
+        }
+
+        if (!Comercios || Comercios.length === 0) {
+            alert("La tabla 'Comercios' parece estar vacía o bloqueada.");
+            return;
+        }
+
 
         // 4. Lógica de Acumulador Progresivo
         let encontrados = Comercios.map(c => {
