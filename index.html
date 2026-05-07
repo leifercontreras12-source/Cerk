@@ -164,7 +164,7 @@ input, select {
     "Hogar y Construcción": ["Ferretería", "Pinturas", "Mueblería", "Decoración", "Iluminación", "Carpintería", "Plomería", "Electricidad", "Vidriería"],
     "Motor e Industria": ["Mecánica", "Repuestos", "Autolavado", "Latonería", "Venta de Vehículos", "Cauchería", "Lubricantes", "Baterías", "Electromecánica"],
     "Insumos y Distribución": ["Mayorista", "Embalajes", "Limpieza", "Papelería", "Tecnología", "Seguridad", "Transporte", "Fletes", "Almacenaje"],
-    "Indefinido": ["Otros", "Servicios Varios", "Emprendimiento Nuevo"]
+    "Indefinido": ["Otros", "Servicios Varios", "Emprendimiento Nuevo", "Artesanías", "Otros5", "Otros6", "Otros7", "Otros8", "Otros9"]
 };
 
 
@@ -181,8 +181,10 @@ input, select {
                 let itemsHTML = "";
                 for (let i = 0; i < 9; i++) {
                     const angle = i * 40;
-                    let content = `<div style="font-size:1.3rem">📍</div><span class="item-text">PRÓXIMAMENTE</span>`;
-                    let label = subcategorias ;
+                    let nombreReal = subcategorias[config.name][i];
+let content = `<div style="font-size:1.3rem">📍</div><span class="item-text">${nombreReal}</span>`;
+let label = nombreReal;
+ ;
                     
                     if (dIdx === 0 && catDB && catDB[i]) {
                         label = catDB[i].nombre;
