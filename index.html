@@ -251,84 +251,76 @@ let label = nombreReal;
         }
 
         async function verMapa(labelRaw) {
-    // 1. Normalizar texto: "MAYORISTA" -> "Mayorista"
     const label = labelRaw.charAt(0).toUpperCase() + labelRaw.slice(1).toLowerCase();
     document.getElementById('map-title').innerText = label.toUpperCase();
     irA('map-view');
 
-    // 2. Obtener Ubicación del Usuario
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-        const uLat = pos.coords.Latitude;
-        const uLon = pos.coords.Longitude;
+    console.log("Iniciando GPS...");
 
-        // Centrar mapa en usuario y poner marcador azul
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        // ESTO SIEMPRE ES MINÚSCULA (es del navegador, no de Supabase)
+        const uLat = pos.coords.latitude; 
+        const uLon = pos.coords.longitude;
+
+        console.log("Ubicación obtenida:", uLat, uLon);
+
+        // Centrar mapa
         map.setView([uLat, uLon], 15);
         L.circle([uLat, uLon], { radius: 20, color: 'blue' }).addTo(map).bindPopup("Tu ubicación").openPopup();
 
-        // 3. Consultar Supabase
-                        // 3. Consultar Supabase (MODO DIAGNÓSTICO)
+        // CONSULTA A SUPABASE
+        // Verifica si tu variable es _supabase o supabase
         const { data: Comercios, error } = await _supabase
             .from('Comercios')
-            .select('*'); // Quitamos los filtros .eq para que traiga TODO
+            .select('*'); 
 
-        console.log("Datos brutos de Supabase:", Comercios);
-        
         if (error) {
-            alert("Error de conexión: " + error.message);
+            console.error("Error de Supabase:", error);
             return;
         }
 
-        if (!Comercios || Comercios.length === 0) {
-            alert("La tabla 'Comercios' parece estar vacía o bloqueada.");
-            return;
-        }
+        // FILTRO MANUAL (Más seguro para evitar errores de base de datos)
+        // Buscamos los que coincidan con el Tipo y tengan Pago_confirmado
+        let encontrados = Comercios.filter(c => 
+            c.Tipo === label && 
+            (c.Pago_confirmado === true || c.Pago_confirmado === "true")
+        );
 
-
-
-        // 4. Lógica de Acumulador Progresivo
-        let encontrados = Comercios.map(c => {
-            c.distancia = calcularDistancia(uLat, uLon, parseFloat(c.Latitud), parseFloat(c.Longitud));
+        // CALCULAR DISTANCIAS
+        encontrados = encontrados.map(c => {
+            // Aquí usamos Mayúsculas porque así me dijiste que están en tu tabla
+            const latComercio = parseFloat(c.Latitud);
+            const lonComercio = parseFloat(c.Longitud);
+            c.distancia = calcularDistancia(uLat, uLon, latComercio, lonComercio);
             return c;
         }).sort((a, b) => a.distancia - b.distancia);
 
-        let mostrar = [];
-        const radios = [0.3, 0.8, 1.5]; // Radios en km
+        const markersLayer = L.layerGroup().addTo(map);
 
-        for (let r of radios) {
-            mostrar = encontrados.filter(c => c.distancia <= r);
-            if (mostrar.length >= 3) break; 
+        // Lógica de mostrar (Si no hay cerca, activar el aviso de búsqueda global)
+        let mostrar = encontrados.filter(c => c.distancia <= 1.5);
+
+        if (mostrar.length === 0 && encontrados.length > 0) {
+            const global = confirm(`No hay comercios cerca. ¿Quieres ver los ${encontrados.length} encontrados en otras zonas?`);
+            if (global) {
+                mostrar = encontrados;
+                const coords = mostrar.map(c => [parseFloat(c.Latitud), parseFloat(c.Longitud)]);
+                map.fitBounds(coords);
+            }
         }
 
-        // 5. Pintar en el Mapa
-        const markersLayer = L.layerGroup().addTo(map);
+        // PINTAR PINS
         mostrar.forEach(c => {
             L.marker([parseFloat(c.Latitud), parseFloat(c.Longitud)])
                 .addTo(markersLayer)
-                .bindPopup(`<b>${c.Nombre}</b><br>Distancia: ${(c.distancia * 1000).toFixed(0)}m`);
+                .bindPopup(`<b>${c.Nombre}</b><br>Distancia: ${(c.distancia).toFixed(1)} km`);
         });
 
-        // 6. Mensaje de Cortesía
-        if (mostrar.length < 3) {
-            setTimeout(() => {
-                const global = confirm(`Solo encontramos ${mostrar.length} comercios a menos de 1.5 km. ¿Quieres hacer una búsqueda global?`);
-                if (global) {
-                    encontrados.forEach(c => {
-                        L.marker([parseFloat(c.Latitud), parseFloat(c.Longitud)])
-                            .addTo(markersLayer)
-                            .bindPopup(`<b>${c.Nombre}</b>`);
-                    });
-                    map.fitBounds(encontrados.map(c => [c.Latitud, c.Longitud]));
-                } else {
-                    alert("Ok, intenta con otra categoría.");
-                    irA('dials-view'); // O el ID de tu vista de diales
-                }
-            }, 1000);
-        }
-
-    }, () => {
-        alert("Por favor, activa el GPS para encontrar comercios cerca de ti.");
-    });
+    }, (err) => {
+        alert("Error de GPS: " + err.message);
+    }, { enableHighAccuracy: true });
 }
+
         
         function obtenerGPS() {
     const status = document.getElementById('gps-status');
