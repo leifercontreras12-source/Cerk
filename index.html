@@ -78,19 +78,24 @@ input, select {
     </div>
 
     <div id="main-ui" class="screen active">
-    <div class="brand" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 10px;">
-        
-        <div id="count_hoy" style="font-size: 0.7rem; font-weight: normal; flex: 1; text-align: left;">
-            0 <small>view D</small>
-        </div>
-
-        <span style="flex: 1; text-align: center;"><span>+</span>CERK</span>
-
-        <div id="count_mes" style="font-size: 0.7rem; font-weight: normal; flex: 1; text-align: right;">
-            0 <small>view M</small>
-        </div>
-
+    <div class="brand" style="position: relative; width: 100%; height: 70px; display: flex; justify-content: center; align-items: center; background: white;">
+    
+    <div id="count_hoy" style="position: absolute; left: 15px; text-align: center; line-height: 1.1; color: #333;">
+        <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase;">VIEW D</div>
+        <div style="font-size: 0.95rem; font-weight: 900;">0</div>
     </div>
+
+    <div style="font-family: 'Georgia', serif; font-style: italic; font-size: 2.1rem; display: flex; align-items: center; letter-spacing: -1px; user-select: none;">
+        <span style="color: #40E0D0; font-style: normal; font-weight: bold; margin-right: -1px;">+</span>
+        <span style="color: #7a8a99;">Cerk</span>
+    </div>
+
+    <div id="count_mes" style="position: absolute; right: 15px; text-align: center; line-height: 1.1; color: #333;">
+        <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase;">VIEW M</div>
+        <div style="font-size: 0.95rem; font-weight: 900;">0</div>
+    </div>
+
+</div>
 
         <div id="dials-root" style="width: 100%;"></div>
         <div class="footer-cta">
@@ -192,13 +197,12 @@ input, select {
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 async function gestionarVisitas() {
-    try {
+        try {
         const hoy = new Date().toISOString().split('T')[0];
-        const baseAñadida = 17; // Tu número base
-        const factorMultiplicador = 1.4; // Puedes ajustar este factor (ej. 1.4, 2, etc.)
+        const baseAñadida = 17; 
+        const factorMultiplicador = 1.4; 
 
-        // 1. Registrar la visita en Supabase (RPC o Upsert)
-        // Usamos upsert: si no existe la fecha la crea, si existe suma 1
+        // 1. Registro en Supabase
         const { data: registroHoy } = await _supabase
             .from('vistas_diarias')
             .select('conteo_real')
@@ -214,26 +218,38 @@ async function gestionarVisitas() {
             await _supabase.from('vistas_diarias').insert({ fecha: hoy, conteo_real: 1 });
         }
 
-        // 2. Obtener el total del mes actual para el contador M
+        // 2. Total del mes
         const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
         const { data: registrosMes } = await _supabase
             .from('vistas_diarias')
             .select('conteo_real')
             .gte('fecha', primerDiaMes);
 
-        const totalRealMes = registrosMes.reduce((acc, curr) => acc + curr.conteo_real, 0);
+        const totalRealMes = registrosMes ? registrosMes.reduce((acc, curr) => acc + curr.conteo_real, 0) : 0;
 
-        // 3. APLICAR EFECTO PLACEBO (Asegurando números enteros)
-        // Fórmula: (Real * Factor) + Base
+        // 3. Cálculos visuales
         const hoyVisual = Math.floor((conteoRealHoy * factorMultiplicador) + baseAñadida);
-        const mesVisual = Math.floor((totalRealMes * factorMultiplicador) + (baseAñadida * 30)); // Base proporcional al mes
+        const mesVisual = Math.floor((totalRealMes * factorMultiplicador) + (baseAñadida * 30));
 
-        // 4. Mostrar en el HTML con el formato "view D" y "view M"
-        // Formateamos miles con 'k' si es necesario
         const formatoK = (num) => num > 999 ? (num / 1000).toFixed(1) + 'k' : num;
 
-        document.getElementById('count_hoy').innerHTML = `<b>${hoyVisual}</b> <small>view D</small>`;
-        document.getElementById('count_mes').innerHTML = `<b>${formatoK(mesVisual)}</b> <small>view M</small>`;
+        // 4. Inyección en el HTML
+        const elHoy = document.getElementById('count_hoy');
+        const elMes = document.getElementById('count_mes');
+
+        if(elHoy) {
+            elHoy.innerHTML = `
+                <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase;">VIEW D</div>
+                <div style="font-size: 0.95rem; font-weight: 900;">${hoyVisual}</div>
+            `;
+        }
+
+        if(elMes) {
+            elMes.innerHTML = `
+                <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase;">VIEW M</div>
+                <div style="font-size: 0.95rem; font-weight: 900;">${formatoK(mesVisual)}</div>
+            `;
+        }
 
     } catch (error) {
         console.error("Error en contadores:", error);
