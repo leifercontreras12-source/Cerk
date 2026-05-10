@@ -78,7 +78,20 @@ input, select {
     </div>
 
     <div id="main-ui" class="screen active">
-        <div class="brand"><span>+</span>CERK</div>
+    <div class="brand" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 10px;">
+        
+        <div id="count-hoy" style="font-size: 0.7rem; font-weight: normal; flex: 1; text-align: left;">
+            0 <small>view D</small>
+        </div>
+
+        <span style="flex: 1; text-align: center;"><span>+</span>CERK</span>
+
+        <div id="count-mes" style="font-size: 0.7rem; font-weight: normal; flex: 1; text-align: right;">
+            0 <small>view M</small>
+        </div>
+
+    </div>
+
         <div id="dials-root" style="width: 100%;"></div>
         <div class="footer-cta">
             <button class="btn-main" style="width: auto; padding: 10px 40px;" onclick="mostrarIntroRegistro()">REGÍSTRATE</button>
@@ -178,6 +191,54 @@ input, select {
         const SUPABASE_URL = "https://zuknitfklgiuoipnjraj.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+async function gestionarVisitas() {
+    try {
+        const hoy = new Date().toISOString().split('T')[0];
+        const baseAñadida = 17; // Tu número base
+        const factorMultiplicador = 1.4; // Puedes ajustar este factor (ej. 1.4, 2, etc.)
+
+        // 1. Registrar la visita en Supabase (RPC o Upsert)
+        // Usamos upsert: si no existe la fecha la crea, si existe suma 1
+        const { data: registroHoy } = await supabase
+            .from('vistas_diarias')
+            .select('conteo_real')
+            .eq('fecha', hoy)
+            .single();
+
+        let conteoRealHoy = 1;
+
+        if (registroHoy) {
+            conteoRealHoy = registroHoy.conteo_real + 1;
+            await _supabase.from('vistas_diarias').update({ conteo_real: conteoRealHoy }).eq('fecha', hoy);
+        } else {
+            await _supabase.from('vistas_diarias').insert({ fecha: hoy, conteo_real: 1 });
+        }
+
+        // 2. Obtener el total del mes actual para el contador M
+        const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+        const { data: registrosMes } = await supabase
+            .from('vistas_diarias')
+            .select('conteo_real')
+            .gte('fecha', primerDiaMes);
+
+        const totalRealMes = registrosMes.reduce((acc, curr) => acc + curr.conteo_real, 0);
+
+        // 3. APLICAR EFECTO PLACEBO (Asegurando números enteros)
+        // Fórmula: (Real * Factor) + Base
+        const hoyVisual = Math.floor((conteoRealHoy * factorMultiplicador) + baseAñadida);
+        const mesVisual = Math.floor((totalRealMes * factorMultiplicador) + (baseAñadida * 30)); // Base proporcional al mes
+
+        // 4. Mostrar en el HTML con el formato "view D" y "view M"
+        // Formateamos miles con 'k' si es necesario
+        const formatoK = (num) => num > 999 ? (num / 1000).toFixed(1) + 'k' : num;
+
+        document.getElementById('count-hoy').innerHTML = `<b>${hoyVisual}</b> <small>view D</small>`;
+        document.getElementById('count-mes').innerHTML = `<b>${formatoK(mesVisual)}</b> <small>view M</small>`;
+
+    } catch (error) {
+        console.error("Error en contadores:", error);
+    }
+}
 
         const dialConfig = [
             { name: "GASTRONOMIA" }, { name: "SALUD Y BIENESTAR" }, { name: "ESTILO Y BELLEZA" },
@@ -203,7 +264,7 @@ input, select {
         let rotations = new Array(10).fill(0);
         let map;
 
-        async function inicializarApp() {
+        async function inicializarApp() {gestionarVisitas()
             const { data: catDB } = await _supabase.from('categorias').select('*').eq('grupo', 'Gastronomía').order('orden', { ascending: true });
             const root = document.getElementById('dials-root');
 
