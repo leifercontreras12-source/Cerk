@@ -199,7 +199,7 @@ async function gestionarVisitas() {
 
         // 1. Registrar la visita en Supabase (RPC o Upsert)
         // Usamos upsert: si no existe la fecha la crea, si existe suma 1
-        const { data: registroHoy } = await supabase
+        const { data: registroHoy } = await _supabase
             .from('vistas_diarias')
             .select('conteo_real')
             .eq('fecha', hoy)
@@ -216,7 +216,7 @@ async function gestionarVisitas() {
 
         // 2. Obtener el total del mes actual para el contador M
         const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-        const { data: registrosMes } = await supabase
+        const { data: registrosMes } = await _supabase
             .from('vistas_diarias')
             .select('conteo_real')
             .gte('fecha', primerDiaMes);
@@ -232,8 +232,8 @@ async function gestionarVisitas() {
         // Formateamos miles con 'k' si es necesario
         const formatoK = (num) => num > 999 ? (num / 1000).toFixed(1) + 'k' : num;
 
-        document.getElementById('count-hoy').innerHTML = `<b>${hoyVisual}</b> <small>view D</small>`;
-        document.getElementById('count-mes').innerHTML = `<b>${formatoK(mesVisual)}</b> <small>view M</small>`;
+        document.getElementById('count_hoy').innerHTML = `<b>${hoyVisual}</b> <small>view D</small>`;
+        document.getElementById('count_mes').innerHTML = `<b>${formatoK(mesVisual)}</b> <small>view M</small>`;
 
     } catch (error) {
         console.error("Error en contadores:", error);
