@@ -74,7 +74,7 @@ input, select {
 <body>
 
     <div id="intro-screen" class="screen">
-        <h1 style="font-family: 'Brush Script MT', cursive; font-size: 3rem;">Bienvenido al ecosistema +CERK</h1>
+        <h1 style="font-family: 'Brush Script MT', cursive; font-size: 3rem;">Bienvenido a +CERK</h1>
     </div>
 
     <div id="main-ui" class="screen active">
@@ -134,9 +134,23 @@ input, select {
 
 
         <div class="form-group">
-            <label>Horario de Trabajo</label>
-            <input type="text" id="reg-horario" placeholder="Ej: 8:00 - 12:00 / 2:00 - 6:00">
-        </div>
+    <label>Horario de Trabajo</label>
+    
+    <select id="reg-dias" class="input-field" style="width:100%; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ccc;">
+        <option value="Lunes a Viernes">Lunes a Viernes</option>
+        <option value="Lunes a Sábado">Lunes a Sábado</option>
+        <option value="Lunes a Domingo">Lunes a Domingo</option>
+        <option value="Todos los días">Todos los días</option>
+        <option value="Fines de semana">Fines de semana</option>
+    </select>
+
+    <div style="display:flex; gap:10px; align-items:center;">
+        <input type="time" id="reg-hora-abre" class="input-field" style="flex:1; padding:10px; border-radius:8px; border:1px solid #ccc;" value="08:00">
+        <span style="font-weight:bold;">a</span>
+        <input type="time" id="reg-hora-cierra" class="input-field" style="flex:1; padding:10px; border-radius:8px; border:1px solid #ccc;" value="18:00">
+    </div>
+</div>
+
 
         <div class="form-group">
             <label>Fotos (Máx. 3 - 1MB c/u)</label>
@@ -319,7 +333,7 @@ let label = nombreReal;
         let mostrar = encontrados.filter(c => c.distancia <= 1.5);
 
         if (mostrar.length === 0 && encontrados.length > 0) {
-            const global = confirm(`No hay comercios cerca. ¿Quieres ver los ${encontrados.length} encontrados en otras zonas?`);
+            const global = confirm(`Lo siento, no hay comercios cerca. ¿Quieres ver los ${encontrados.length} encontrados en otras zonas?`);
             if (global) {
                 mostrar = encontrados;
                 const coords = mostrar.map(c => [parseFloat(c.Latitud), parseFloat(c.Longitud)]);
@@ -376,7 +390,12 @@ let label = nombreReal;
     const dial = document.getElementById('sel-dial')?.value;
     const tipo = document.getElementById('sel-tipo')?.value;
     const tlf = document.getElementById('reg-tel')?.value;
-    const valorHorario = document.getElementById('reg-horario')?.value || "No provista";
+    const dias = document.getElementById('reg-dias')?.value;
+    const abre = document.getElementById('reg-hora-abre')?.value;
+    const cierra = document.getElementById('reg-hora-cierra')?.value;
+
+// Esta variable es la que "arma" la frase profesional
+    const horarioFinal = `${dias}, de ${abre} a ${cierra}`;
     const fotosInput = document.getElementById('reg-fotos');
     const fotos = fotosInput ? fotosInput.files : [];
 
@@ -440,7 +459,7 @@ let label = nombreReal;
                 Dial: dial,
                 Tipo: tipo,
                 WhatsApp: tlf,
-                Horario: valorHorario,
+                Horario: horarioFinal,
                 Latitud: userCoords.lat,
                 Longitud: userCoords.lng,
                 Fotos_urls: fotosSubidasUrls,
