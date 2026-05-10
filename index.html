@@ -74,7 +74,7 @@ input, select {
 <body>
 
     <div id="intro-screen" class="screen">
-        <h1 style="font-family: 'Brush Script MT', cursive; font-size: 3rem;">Bienvenido a +CERK</h1>
+        <h1 style="font-family: 'Brush Script MT', cursive; font-size: 3rem;">Bienvenido al ecosistema +CERK</h1>
     </div>
 
     <div id="main-ui" class="screen active">
@@ -450,14 +450,34 @@ let label = nombreReal;
         if (insertError) throw insertError;
 
         // 8. ÉXITO: Salto a WhatsApp
+                // 1. Definir el mensaje de WhatsApp
         const mensaje = `¡Hola! Acabo de registrar mi comercio: *${nombre}*. Ya subí los datos y las fotos al sistema +CERK.`;
-        window.location.href = `https://wa.me/584247126548?text=${encodeURIComponent(mensaje)}`;
+        
+        // 2. Mostrar éxito visual al usuario
+        btn.style.backgroundColor = "#28a745"; // Cambia a verde (éxito)
+        btn.innerText = "✅ ¡REGISTRO EXITOSO!";
 
-    } catch (error) {
-        console.error("Error:", error);
-        alert("❌ Error: " + (error.message || "No se pudo conectar con Supabase"));
+        // 3. Pequeña pausa de 1.5 segundos para que el usuario lo vea
+        setTimeout(() => {
+            // Volver a la pantalla principal "por debajo"
+            irA('main-ui');
+            
+            // Resetear el botón para la próxima vez que se abra el registro
+            btn.disabled = false;
+            btn.innerText = "ACTIVAR Y PAGAR";
+            btn.style.backgroundColor = ""; // Vuelve a su color original
+
+            // 4. Saltar a WhatsApp
+            window.location.href = `https://wa.me/584247126548?text=${encodeURIComponent(mensaje)}`;
+        }, 1500);
+
+    } catch (error) {console.error("Error:", error);
+        alert("❌ Error: " + (error.message || "No se pudo conectar con el servidor"));
+        
+        // Devolvemos el botón a la vida para que el usuario pueda reintentar
         btn.disabled = false;
         btn.innerText = "ACTIVAR Y PAGAR";
+        btn.style.backgroundColor = ""; 
     }
 }
 function calcularDistancia(lat1, lon1, lat2, lon2) {
