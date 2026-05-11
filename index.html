@@ -408,7 +408,7 @@ let label = nombreReal;
     tipo.innerHTML = '<option value="">Cargando...</option>';
 
     // Consulta a Supabase filtrando por el grupo (Dial)
-    const { data, error } = await supabase.from('categorias').select('*').eq('grupo', dial);
+    const { data, error } = await _supabase.from('categorias').select('*').eq('grupo', dial);
 
     if (!error && data) {
         tipo.innerHTML = '<option value="">Selecciona...</option>';
