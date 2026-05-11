@@ -593,6 +593,21 @@ async function comprimirImagen(archivo) {
     const horarioFinal = `${dias}, de ${abre} a ${cierra}`;
     const fotosInput = document.getElementById('reg-fotos');
     const fotos = fotosInput ? fotosInput.files : [];
+            
+// 1. Validación de Email Profesional
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+if (!emailRegex.test(emailComercio)) {
+    alert("📧 Por favor, ingresa un correo electrónico válido (ejemplo@dominio.com).");
+    return;
+}
+
+// 2. Validación de Teléfono (Mínimo 10 dígitos)
+// Eliminamos espacios o guiones si el usuario los puso para contar solo números
+const tlfLimpio = tlf.replace(/\D/g, ''); 
+if (tlfLimpio.length < 10) {
+    alert("📞 El número de teléfono es demasiado corto. Debe tener al menos 10 dígitos.");
+    return;
+}
 
     // 2. VALIDACIÓN: Formulario vacío
     if (!nombre || !tlf || !tipo) {
@@ -604,20 +619,6 @@ async function comprimirImagen(archivo) {
     if (typeof userCoords === 'undefined' || !userCoords) {
         alert("📍 Es obligatorio capturar la ubicación GPS del local.");
         return;
-    }
-
-    // 4. VALIDACIÓN: Cantidad de fotos (Mínimo 2, Máximo 3)
-    if (fotos.length < 2 || fotos.length > 3) {
-        alert("📸 Debes seleccionar mínimo 2 y máximo 3 fotos.");
-        return;
-    }
-
-    // 5. VALIDACIÓN: Peso de fotos (Máximo 1MB por cada una)
-    for (let i = 0; i < fotos.length; i++) {
-        if (fotos[i].size > 1048576) { // 1MB en bytes
-            alert(`⚠️ La foto "${fotos[i].name}" es muy pesada. Máximo 1MB.`);
-            return;
-        }
     }
 
     try {
@@ -712,6 +713,35 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Retorna distancia en km
 }
+// El Portero: Validación inmediata de fotos
+document.getElementById('reg-fotos').addEventListener('change', function() {
+    const maxPeso = 3 * 1024 * 1024; // Límite de 3MB
+    const archivos = this.files;
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+
+    for (let i = 0; i < archivos.length; i++) {
+        // 1. Validar Tipo de archivo
+        if (!tiposPermitidos.includes(archivos[i].type)) {
+            alert(`El archivo "${archivos[i].name}" no es una imagen válida. Usa JPG, PNG o WebP.`);
+            this.value = ''; 
+            return;
+        }
+
+        // 2. Validar Peso
+        if (archivos[i].size > maxPeso) {
+            alert(`La foto "${archivos[i].name}" pesa demasiado. El máximo es 3MB.`);
+            this.value = ''; 
+            return;
+        }
+    }
+    
+    // 3. Validar Máximo de fotos
+    if (archivos.length > 3) {
+        alert("Solo puedes subir un máximo de 3 fotos.");
+        this.value = '';
+        return;
+    }
+});
 
         window.onload = inicializarApp;
     </script>
