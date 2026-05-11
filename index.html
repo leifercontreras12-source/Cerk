@@ -405,7 +405,10 @@ let label = nombreReal;
         async function actualizarSubcategorias() {
     const dial = document.getElementById('sel-dial').value;
     const tipo = document.getElementById('sel-tipo');
+    const subDiv = document.getElementById('sel-subdivision'); // <--- NUEVA
+
     tipo.innerHTML = '<option value="">Cargando...</option>';
+    subDiv.innerHTML = '<option value="">Primero elige un tipo...</option>'; // <--- NUEVA (Limpia)
 
     // Consulta a Supabase filtrando por el grupo (Dial)
     const { data, error } = await _supabase.from('categorias').select('*').eq('grupo', dial);
@@ -413,7 +416,6 @@ let label = nombreReal;
     if (!error && data) {
         tipo.innerHTML = '<option value="">Selecciona...</option>';
         data.forEach(cat => {
-            // Guardamos la columna busqueda en un atributo de datos para usarlo luego
             tipo.innerHTML += `<option value="${cat.nombre}" data-busqueda="${cat.busqueda}">${cat.nombre}</option>`;
         });
     }
@@ -422,15 +424,19 @@ let label = nombreReal;
 function actualizarSubdivisiones() {
     const tipo = document.getElementById('sel-tipo');
     const subDiv = document.getElementById('sel-subdivision');
-    const selectedOption = tipo.options[tipo.selectedIndex];
     
-    // Extraemos la cadena de la columna "busqueda" que guardamos en el paso anterior
+    // Si el tipo está vacío, limpiamos la subdivisión y nos detenemos
+    if (tipo.value === "") {
+        subDiv.innerHTML = '<option value="">Primero elige un tipo...</option>';
+        return;
+    }
+
+    const selectedOption = tipo.options[tipo.selectedIndex];
     const busquedaStr = selectedOption.getAttribute('data-busqueda') || "";
     
     subDiv.innerHTML = '<option value="">Selecciona...</option>';
     
     if (busquedaStr) {
-        // Rompemos la cadena por las comas y limpiamos espacios
         const opciones = busquedaStr.split(',');
         opciones.forEach(op => {
             const limpia = op.trim();
