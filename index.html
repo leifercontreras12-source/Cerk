@@ -734,7 +734,13 @@ document.getElementById('reg-fotos').addEventListener('change', function() {
             return;
         }
     }
-    
+    // Validación de MÍNIMO de fotos (La barrera final)
+if (archivos.length < 2) {
+    alert("📸 Por seguridad y estética, debes subir al menos 2 fotos de tu comercio.");
+    this.value = '';
+    return;
+}
+
     // 3. Validar Máximo de fotos
     if (archivos.length > 3) {
         alert("Solo puedes subir un máximo de 3 fotos.");
