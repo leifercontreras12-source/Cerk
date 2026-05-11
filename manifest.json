@@ -3,12 +3,12 @@
   "name": "+Cerk App",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "1778462340724 (1).png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "icon-512.png",
+      "src": "1778462340724 (1) (1).png",
       "type": "image/png",
       "sizes": "512x512"
     }
@@ -16,5 +16,6 @@
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#40E0D0",
-  "background_color": "#ffffff"
+  "background_color": "#F3F3F1"
 }
+
