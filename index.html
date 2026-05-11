@@ -13,11 +13,13 @@
         
         /* FONDO DE MAPA DIFUSO RESTAURADO */
         body { 
-            background-color: var(--bg-base); 
-            background-image: radial-gradient(circle at center, rgba(244,247,249,0.2) 0%, rgba(244,247,249,0.98) 100%),
-            url("data:image/svg+xml;base64,CjxzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB3aWR0aD0nODAwJyBoZWlnaHQ9JzgwMCcgdmlld0JveD0nMCAwIDgwMCA4MDAnPgogICAgPHJlY3Qgd2lkdGg9JzgwMCcgaGVpZ2h0PSc4MDAnIGZpbGw9JyNmNGY3ZjknLz4KICAgIDxnIHN0cm9rZT0nIzFhM2E1Zicgc3Ryb2tlLXdpZHRoPScxLjInIHN0cm9rZS1vcGFjaXR5PScwLjA4JyBmaWxsPSdub25lJz4KICAgICAgICA8cGF0aCBkPSdNMCAxNTAgTDgwMCAxNTAgTTAgNDUwIEw4MDAgNDUwIE0xNTAgMCBMMTUwIDgwMCBNNTUwIDAgTDU1MCA4MDAnLz4KICAgICAgICA8cGF0aCBkPSdNMCAwIEw4MDAgNjAwIE04MDAgMCBMMCA4MDAgTTMwMCAwIEw4MDAgNTAwIE0wIDMwMCBMNTAwIDgwMCcvPgogICAgPC9nPgo8L3N2Zz4=");
-            background-attachment: fixed; margin: 0; font-family: 'Segoe UI', sans-serif; color: var(--navy); overflow-x: hidden;
-        }
+    background-image: url('1778466671825 (1).webp'); 
+    background-size: cover; 
+    background-position: center; 
+    background-attachment: fixed; 
+    margin: 0; 
+}
+
 
         /* PANTALLAS */
         .screen { display: none; min-height: 100vh; width: 100%; flex-direction: column; align-items: center; }
@@ -73,6 +75,32 @@ input, select {
     </style>
 </head>
 <body>
+<div id="splash-screen">
+  <img src="1778462340724 (1).png" alt="Logo" style="width:200px; height:auto;">
+</div>
+
+<style>
+  #splash-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-image: url('1778466671825 (1).webp');
+    background-size: cover; background-position: center;
+    display: flex; justify-content: center; align-items: center;
+    z-index: 9999; transition: opacity 0.5s ease-out;
+  }
+  .fade-out { opacity: 0; pointer-events: none; }
+</style>
+
+<script>
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const s = document.getElementById('splash-screen');
+      if(s){
+        s.classList.add('fade-out');
+        setTimeout(() => { s.style.display = 'none'; }, 500);
+      }
+    }, 800);
+  });
+</script>
 
     <div id="intro-screen" class="screen">
         <h1 style="font-family: 'Brush Script MT', cursive; font-size: 3rem;">Bienvenido a +CERK</h1>
