@@ -545,6 +545,38 @@ function actualizarSubdivisiones() {
         { enableHighAccuracy: true, timeout: 10000 }
     );
 }
+async function comprimirImagen(archivo) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(archivo);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                // Redimensionar si es mayor a 1080px (mantiene proporción)
+                const MAX_WIDTH = 1080;
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Convertir a WebP con calidad 0.7 (70%)
+                canvas.toBlob((blob) => {
+                    resolve(blob);
+                }, 'image/webp', 0.7);
+            };
+        };
+    });
+}
 
         async function finalizarRegistro() {
     // 1. Referencias a los elementos
@@ -596,14 +628,21 @@ function actualizarSubdivisiones() {
         let fotosSubidasUrls = [];
 
         // 6. SUBIDA A BUCKET (fotos-comercios)
-        for (let i = 0; i < fotos.length; i++) {
+                for (let i = 0; i < fotos.length; i++) {
             const file = fotos[i];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}_${i}.${fileExt}`;
+            
+            // 1. Pasamos la foto por la prensa antes de subirla
+            const fotoComprimida = await comprimirImagen(file);
+            
+            // 2. El nombre ahora siempre será .webp
+            const fileName = `${Date.now()}_${i}.webp`;
 
+            // 3. Subimos la foto comprimida (fotoComprimida) en lugar del original (file)
             const { data, error: uploadError } = await _supabase.storage
                 .from('imagenes_comercios')
-                .upload(fileName, file);
+                .upload(fileName, fotoComprimida, {
+                    contentType: 'image/webp'
+                });
 
             if (uploadError) throw uploadError;
 
