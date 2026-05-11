@@ -171,11 +171,18 @@ input, select {
         </div>
 
         <div class="form-group">
-            <label>¿Qué tipo de negocio es?</label>
-            <select id="sel-tipo">
-                <option value="">Primero elige un dial...</option>
-            </select>
-        </div>
+    <label>¿Qué tipo de negocio es?</label>
+    <select id="sel-tipo" onchange="actualizarSubdivisiones()">
+        <option value="">Primero elige un dial...</option>
+    </select>
+</div>
+
+<div class="form-group">
+    <label>Subdivisión específica</label>
+    <select id="sel-subdivision">
+        <option value="">Selecciona tipo de negocio...</option>
+    </select>
+</div>
 
         <div class="form-group">
     <label>WhatsApp (con código de país)</label>
@@ -189,7 +196,10 @@ input, select {
     <small style="color: gray; font-size: 0.8em;">Incluye 58 o 57 al inicio</small>
 </div>
 
-
+<div class="form-group">
+    <label>Correo Electrónico del Comercio</label>
+    <input type="email" id="reg-email" placeholder="ejemplo@correo.com">
+</div>
 
         <div class="form-group">
     <label>Horario de Trabajo</label>
@@ -392,12 +402,42 @@ let label = nombreReal;
             setTimeout(() => { intro.classList.add('fade-out'); setTimeout(() => { intro.classList.remove('active', 'fade-out'); irA('register-ui'); }, 500); }, 2000);
         }
 
-        function actualizarSubcategorias() {
-            const dial = document.getElementById('sel-dial').value;
-            const tipo = document.getElementById('sel-tipo');
-            tipo.innerHTML = '';
-            if(subcategorias[dial]) subcategorias[dial].forEach(s => tipo.innerHTML += `<option value="${s}">${s}</option>`);
-        }
+        async function actualizarSubcategorias() {
+    const dial = document.getElementById('sel-dial').value;
+    const tipo = document.getElementById('sel-tipo');
+    tipo.innerHTML = '<option value="">Cargando...</option>';
+
+    // Consulta a Supabase filtrando por el grupo (Dial)
+    const { data, error } = await supabase.from('categorias').select('*').eq('grupo', dial);
+
+    if (!error && data) {
+        tipo.innerHTML = '<option value="">Selecciona...</option>';
+        data.forEach(cat => {
+            // Guardamos la columna busqueda en un atributo de datos para usarlo luego
+            tipo.innerHTML += `<option value="${cat.nombre}" data-busqueda="${cat.busqueda}">${cat.nombre}</option>`;
+        });
+    }
+}
+
+function actualizarSubdivisiones() {
+    const tipo = document.getElementById('sel-tipo');
+    const subDiv = document.getElementById('sel-subdivision');
+    const selectedOption = tipo.options[tipo.selectedIndex];
+    
+    // Extraemos la cadena de la columna "busqueda" que guardamos en el paso anterior
+    const busquedaStr = selectedOption.getAttribute('data-busqueda') || "";
+    
+    subDiv.innerHTML = '<option value="">Selecciona...</option>';
+    
+    if (busquedaStr) {
+        // Rompemos la cadena por las comas y limpiamos espacios
+        const opciones = busquedaStr.split(',');
+        opciones.forEach(op => {
+            const limpia = op.trim();
+            subDiv.innerHTML += `<option value="${limia}">${limpia}</option>`;
+        });
+    }
+}
 
         async function verMapa(labelRaw) {
     const label = labelRaw.charAt(0).toUpperCase() + labelRaw.slice(1).toLowerCase();
@@ -506,12 +546,12 @@ let label = nombreReal;
     const nombre = document.getElementById('reg-nombre')?.value;
     const dial = document.getElementById('sel-dial')?.value;
     const tipo = document.getElementById('sel-tipo')?.value;
+    const subdivision = document.getElementById('sel-subdivision').value;    
     const tlf = document.getElementById('reg-tel')?.value;
+    const emailComercio = document.getElementById('reg-email').value;
     const dias = document.getElementById('reg-dias')?.value;
     const abre = document.getElementById('reg-hora-abre')?.value;
-    const cierra = document.getElementById('reg-hora-cierra')?.value;
-
-// Esta variable es la que "arma" la frase profesional
+    const cierra = document.getElementById('reg-hora-cierra')?.value; 
     const horarioFinal = `${dias}, de ${abre} a ${cierra}`;
     const fotosInput = document.getElementById('reg-fotos');
     const fotos = fotosInput ? fotosInput.files : [];
@@ -568,20 +608,22 @@ let label = nombreReal;
             fotosSubidasUrls.push(publicUrl);
         }
 
-        // 7. GUARDADO EN TABLA (Comercios)
-        const { error: insertError } = await _supabase
-            .from('Comercios')
-            .insert([{
-                Nombre: nombre,
-                Dial: dial,
-                Tipo: tipo,
-                WhatsApp: tlf,
-                Horario: horarioFinal,
-                Latitud: userCoords.lat,
-                Longitud: userCoords.lng,
-                Fotos_urls: fotosSubidasUrls,
-                Pago_confirmado: false
-            }]);
+    const { error: insertError } = await _supabase
+    .from('Comercios')
+    .insert([{
+        Nombre: nombre,
+        Dial: dial,
+        Tipo: tipo,
+        Busqueda: subdivision, // Guardamos la subdivisión elegida
+        WhatsApp: tlf,
+        Horario: horarioFinal,
+        Latitud: userCoords.lat,
+        Longitud: userCoords.lng,
+        Fotos_urls: fotosSubidasUrls,
+        Pago_confirmado: false,
+        Email_propietario: emailComercio // Guardamos el correo
+    }]);
+
 
         if (insertError) throw insertError;
 
