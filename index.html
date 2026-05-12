@@ -164,8 +164,8 @@ input, select {
                 <option value="DIESEL E INDUSTRIA">6. DIESEL E INDUSTRIA</option>
                 <option value="INSUMOS Y DISTRIBUCION">7. INSUMOS Y DISTRIBUCION</option>
                 <option value="TECNOLOGIA Y COMUNICACION">8. TECNOLOGIA Y COMUNICACION</option>
-<option value="SERVICIOS Y LOGISTICA">9. SERVICIOS Y LOGISTICA</option>
-<option value="EXCLUSIVO">10. EXCLUSIVO</option>
+                <option value="SERVICIOS Y LOGISTICA">9. SERVICIOS Y LOGISTICA</option>
+                <option value="EXCLUSIVO">10. EXCLUSIVO</option>
 
             </select>
         </div>
@@ -331,31 +331,41 @@ async function gestionarVisitas() {
         let map;
 
         async function inicializarApp() {gestionarVisitas()
-            const { data: catDB } = await _supabase.from('categorias').select('*').eq('grupo', 'Gastronomía').order('orden', { ascending: true });
             const root = document.getElementById('dials-root');
 
-            dialConfig.forEach((config, dIdx) => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'dial-wrapper';
-                let itemsHTML = "";
-                for (let i = 0; i < 9; i++) {
-                    const angle = i * 40;
-                    let nombreReal = subcategorias[config.name][i];
-let content = `<div style="font-size:1.3rem">📍</div><span class="item-text">${nombreReal}</span>`;
-let label = nombreReal;
- ;
-                    
-                    if (dIdx === 0 && catDB && catDB[i]) {
-                        label = catDB[i].nombre;
-                        let img = label === "Panadería" ? "https://zuknitfklgiuoipnjraj.supabase.co/storage/v1/object/public/imagenes-cerk/Panaderia.jpg" : catDB[i].imagen_url;
-                        content = `<img src="${img}" class="item-img" onerror="this.src='https://via.placeholder.com/150?text=Cerk'"><span class="item-text">${label}</span>`;
-                    }
-                    itemsHTML += `<div class="carousel__item" onclick="verMapa('${label}')" id="it-${dIdx}-${i}" style="transform: rotateY(${angle}deg) translateZ(185px) rotateY(-${angle}deg)">${content}</div>`;
-                }
-                wrapper.innerHTML = `<div class="dial-label">${config.name}</div><div class="scene"><div class="carousel" id="car-${dIdx}">${itemsHTML}</div></div>`;
-                root.appendChild(wrapper);
-                setupCarouselLogic(dIdx);
-            });
+            // 1. Sacamos el nombre de la maleta
+const rubroElegido = localStorage.getItem('subcategoria_seleccionada');
+
+if (rubroElegido) {
+    // 2. Buscamos la fila donde el nombre coincida con la maleta
+    const { data: catDB, error } = await _supabase
+        .from('categorias')
+        .select('busqueda')
+        .eq('nombre', rubroElegido)
+        .single(); // Traemos solo esa fila
+
+    if (catDB && catDB.busqueda) {
+        // 3. Picamos las palabras por la coma para tener una lista
+        const subdivisiones = catDB.busqueda.split(',');
+
+        // 4. Aquí va tu lógica para dibujar los globitos (dials)
+        const root = document.getElementById('dials-root');
+        root.innerHTML = ''; // Limpiamos por si acaso
+
+        subdivisiones.forEach(sub => {
+            // Aquí el código crea el globito con el texto de la variable 'sub'
+            const globito = document.createElement('div');
+            globito.className = 'globito-estilo'; // Usa tu clase de CSS
+            globito.innerText = sub;
+            
+            // Al tocar el globito, se dispara la búsqueda de comercios
+            globito.onclick = () => buscarComerciosPorTipo(sub);
+            
+            root.appendChild(globito);
+        });
+    }
+}
+
             map = L.map('map').setView([7.767, -72.230], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         }
@@ -446,9 +456,16 @@ function actualizarSubdivisiones() {
 }
 
         async function verMapa(labelRaw) {
+    // 1. Normalizamos el texto para el título visual
     const label = labelRaw.charAt(0).toUpperCase() + labelRaw.slice(1).toLowerCase();
     document.getElementById('map-title').innerText = label.toUpperCase();
+
+    // 2. LA MALETA: Guardamos en MAYÚSCULAS para que Supabase lo entienda
+    localStorage.setItem('subcategoria_seleccionada', labelRaw.toUpperCase());
+
+    // 3. Saltamos al mapa
     irA('map-view');
+}
 
     console.log("Iniciando GPS...");
 
