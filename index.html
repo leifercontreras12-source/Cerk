@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { 
-            --navy-deep: #0a192f; 
+            --navy-deep: #0a192f; /* Azul Marino Profundo */
             --accent-blue: #00b4d8; 
             --white: #ffffff;
             --glass: rgba(255, 255, 255, 0.9);
@@ -22,6 +22,7 @@
             margin: 0; overflow-x: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
+        /* Estética Premium del Encabezado */
         .brand { 
             background: var(--white); width: 100%; height: 75px; 
             display: flex; justify-content: center; align-items: center; 
@@ -31,13 +32,16 @@
         .plus-sign { color: var(--accent-blue); font-weight: bold; }
         .cerk-text { color: #7a8a99; }
 
+        /* Contadores */
         .stat-box { position: absolute; font-size: 0.65rem; color: var(--navy-deep); font-weight: bold; text-align: center; }
         #count_hoy { left: 15px; }
         #count_mes { right: 15px; }
 
+        /* Pantallas */
         .screen { display: none; min-height: 100vh; width: 100%; flex-direction: column; align-items: center; }
         .active { display: flex; }
 
+        /* Transiciones y Splash */
         #splash-screen, #welcome-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             display: flex; justify-content: center; align-items: center; z-index: 9999; 
@@ -45,6 +49,7 @@
         #welcome-screen { background: var(--navy-deep); color: var(--white); flex-direction: column; display: none; }
         .fade-out { opacity: 0; pointer-events: none; transition: opacity 0.6s ease-out; }
 
+        /* Diales 3D Premium */
         .dial-container { width: 100%; padding: 15px 0; }
         .dial-wrapper { width: 100%; height: 160px; margin-bottom: 10px; }
         .dial-label { 
@@ -62,6 +67,7 @@
         .item-img { width: 100%; height: 70%; object-fit: cover; }
         .item-text { font-size: 0.58rem; font-weight: 900; padding: 4px; text-align: center; color: var(--navy-deep); }
 
+        /* Formulario Estilo Premium */
         .form-card { 
             width: 90%; max-width: 420px; background: var(--glass); 
             backdrop-filter: blur(10px); border-radius: 30px; 
@@ -75,6 +81,7 @@
         }
         .form-group input:focus { border-color: var(--accent-blue); box-shadow: 0 0 8px rgba(0,180,216,0.2); }
 
+        /* Botones Especiales */
         .btn-navy { 
             background: var(--navy-deep); color: var(--white); 
             border: none; padding: 16px; border-radius: 50px; 
@@ -83,18 +90,7 @@
         }
         .btn-navy:active { transform: scale(0.96); }
 
-        /* [MEJORA] ESTILOS PARA POPUP DEL MAPA */
-        .popup-container { font-family: 'Segoe UI', sans-serif; min-width: 180px; }
-        .popup-title { font-weight: 900; color: var(--navy-deep); font-size: 1.1rem; display: block; margin-bottom: 2px; }
-        .popup-hour { color: #555; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; display: block; }
-        .popup-gallery { display: flex; gap: 5px; margin: 10px 0; overflow-x: auto; padding-bottom: 5px; }
-        .popup-img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; flex-shrink: 0; border: 1px solid #ddd; }
-        .btn-ws-popup { 
-            background: #25D366; color: white; border: none; padding: 10px; 
-            border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer;
-            display: flex; justify-content: center; align-items: center; gap: 5px;
-        }
-
+        /* Mapa y Filtros */
         .map-header { background: var(--navy-deep); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
         .filter-bar { width: 100%; background: white; padding: 12px; display: flex; gap: 10px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .globito { 
@@ -137,8 +133,8 @@
         <div class="form-group"><label>Subdivisión (Tipo)</label><select id="reg-tipo" disabled></select></div>
         <div class="form-group"><label>WhatsApp</label><input type="tel" id="reg-ws" placeholder="Ej: 584120000000"></div>
         <div class="form-group"><label>Correo</label><input type="email" id="reg-email"></div>
-        <div class="form-group"><label>Horario</label><input type="text" id="reg-horario" placeholder="8:00am-6:00pm"></div>
-        <div class="form-group"><label>Fotos (min 2 - max 3 -3MB c/u)</label><input type="file" id="reg-fotos" multiple accept="image/*"></div>
+        <div class="form-group"><label>Horario</label><input type="text" id="reg-horario" placeholder="8:00am - 6:00pm"></div>
+        <div class="form-group"><label>Fotos (Min 2)</label><input type="file" id="reg-fotos" multiple accept="image/*"></div>
         
         <button class="btn-navy" style="background: #7a8a99; margin-bottom: 10px;" onclick="capturarGPS()">Capturar GPS</button>
         <p id="gps-status" style="display:none; color: green; text-align: center; font-weight: bold; font-size: 0.8rem; margin-bottom: 15px;">Ubicación Lista ✓</p>
@@ -158,6 +154,7 @@
 </div>
 
 <script>
+    // [MARCADOR-ADMIN] CONFIGURACIÓN SUPABASE
     const SUPABASE_URL = "https://zuknitfklgiuoipnjraj.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -167,28 +164,36 @@
 
     const categoriasConfig = ["GASTRONOMIA", "SALUD Y BIENESTAR", "ESTILO Y BELLEZA", "HOGAR Y CONSTRUCCION", "AUTOMOTRIZ", "DIESEL E INDUSTRIA", "INSUMOS Y DISTRIBUCION", "TECNOLOGIA Y COMUNICACION", "SERVICIOS Y LOGISTICA", "EXCLUSIVO"];
 
+    // [MARCADOR-ADMIN] LÓGICA DEL CONTADOR (FACTOR 1.4)
     async function initContador() {
         const hoy = new Date().toISOString().split('T')[0];
         const { data } = await _supabase.from('vistas_diarias').select('*').eq('fecha', hoy).single();
+        
         let actual = data ? data.conteo_real : 17; 
         if(!data) await _supabase.from('vistas_diarias').insert({fecha: hoy, conteo_real: 17});
         else await _supabase.from('vistas_diarias').update({conteo_real: actual + 1}).eq('fecha', hoy);
+
         document.getElementById('count_hoy').innerHTML = `HOY<br>${Math.floor((actual+1) * 1.4)}`;
+        
         const { data: todos } = await _supabase.from('vistas_diarias').select('conteo_real');
         const mes = todos.reduce((a, b) => a + b.conteo_real, 0);
         document.getElementById('count_mes').innerHTML = `MES<br>${Math.floor(mes * 1.4)}`;
     }
 
+    // [MARCADOR-ADMIN] RECONSTRUCCIÓN DE DIALES 3D
     async function cargarDiales() {
         const root = document.getElementById('dials-root');
         const { data: catData } = await _supabase.from('categorias').select('*').order('orden', {ascending: true});
+
         categoriasConfig.forEach((catName, dIdx) => {
             const wrap = document.createElement('div');
             wrap.className = 'dial-wrapper';
             wrap.innerHTML = `<div class="dial-label">${catName}</div><div class="scene"><div class="carousel" id="car-${dIdx}"></div></div>`;
             root.appendChild(wrap);
+
             const car = wrap.querySelector(`#car-${dIdx}`);
             const subs = catData.filter(c => c.grupo === catName);
+
             subs.forEach((s, iIdx) => {
                 const item = document.createElement('div');
                 item.className = 'carousel__item';
@@ -202,6 +207,7 @@
         });
     }
 
+    // [MARCADOR-ADMIN] LÓGICA RADIAL INTELIGENTE (0.3 - 0.8 - 1.5)
     function getDistance(lat1, lon1, lat2, lon2) {
         const R = 6371;
         const dLat = (lat2-lat1) * Math.PI/180;
@@ -210,139 +216,54 @@
         return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
     }
 
-    // [MEJORA] FUNCIÓN BUSCARCERCA CON POPUP ENRIQUECIDO
     async function buscarCerca(tipo, radio) {
         markersLayer.clearLayers();
         const { data } = await _supabase.from('Comercios').select('*').eq('Tipo', tipo).eq('Pago_confirmado', true);
         if(!data) return;
+
         const filtrados = data.filter(c => getDistance(userCoords.lat, userCoords.lon, c.Latitud, c.Longitud) <= radio);
 
         if(filtrados.length >= 1) {
-            filtrados.forEach(c => {
-                // Procesar lista de fotos
-                const listaFotos = c.Fotos_urls ? c.Fotos_urls.split(',') : [];
-                const fotosHtml = listaFotos.map(url => `<img src="${url}" class="popup-img">`).join('');
-                
-                const popupContent = `
-                    <div class="popup-container">
-                        <span class="popup-title">${c.Nombre}</span>
-                        <span class="popup-hour">Horario: ${c.Horario}</span>
-                        <div class="popup-gallery">${fotosHtml}</div>
-                        <button class="btn-ws-popup" onclick="window.open('https://wa.me/${c.WhatsApp}')">
-                            Contactar WhatsApp
-                        </button>
-                    </div>
-                `;
-                L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(popupContent);
-            });
+            filtrados.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(`<b>${c.Nombre}</b><br>${c.Horario}`));
             map.fitBounds(filtrados.map(c => [c.Latitud, c.Longitud]));
         } else if(radio < 1.5) {
-            buscarCerca(tipo, radio === 0.3 ? 0.8 : 1.5);
+            const proxRadio = radio === 0.3 ? 0.8 : 1.5;
+            buscarCerca(tipo, proxRadio);
         } else {
-            alert("No hay comercios a 1.5km.");
+            if(confirm("No hay comercios a 1.5km. ¿Ver todos en la zona?")) {
+                data.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(c.Nombre));
+            }
         }
     }
 
-    // [MEJORA] COMPRESOR WEBP INTERNO
-    async function procesarImagenWebP(archivo) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(archivo);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const max = 1000;
-                    if (width > max) { height *= max / width; width = max; }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    canvas.toBlob((blob) => resolve(blob), 'image/webp', 0.7);
-                };
-            };
-        });
-    }
-
-    // [MEJORA] LÓGICA DE REGISTRO CON VALIDACIONES Y STORAGE
+    // [MARCADOR-ADMIN] COMPRESIÓN Y REGISTRO
     async function procesarRegistro() {
         const btn = document.getElementById('btn-activar');
-        const Nombre = document.getElementById('reg-nombre').value;
-        const WhatsApp = document.getElementById('reg-ws').value;
-        const Email_propietario = document.getElementById('reg-email').value;
-        const Dial = document.getElementById('reg-dial').value;
-        const Tipo = document.getElementById('reg-tipo').value;
-        const Horario = document.getElementById('reg-horario').value;
-        const fotosInput = document.getElementById('reg-fotos');
-    
+        btn.innerText = "PROCESANDO..."; btn.disabled = true;
 
-        // Validaciones de formulario lleno
-        if(!nombre || ! ws || !email || !dial || !tipo || !regCoords) {
-            alert("primero llena el formulario"); return;
-        }
+        const payload = {
+            Nombre: document.getElementById('reg-nombre').value,
+            Dial: document.getElementById('reg-dial').value,
+            Tipo: document.getElementById('reg-tipo').value,
+            WhatsApp: document.getElementById('reg-ws').value,
+            Latitud: regCoords.lat, Longitud: regCoords.lon,
+            Email_propietario: document.getElementById('reg-email').value,
+            Horario: document.getElementById('reg-horario').value,
+            Pago_confirmado: false
+        };
 
-        // Validaciones de formato
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if(!emailRegex.test(email)) { alert("formato de correo es inválido"); return; }
-        if(ws.length < 10 || ws.length > 12 || isNaN(ws)) { alert("el nro de tlf es inválido"); return; }
-        if(inputFotos.files.length < 2 || inputFotos.files.length > 3) { alert("Sube entre 2 y 3 fotos"); return; }
-
-        btn.innerText = "PROCESANDO IMÁGENES..."; btn.disabled = true;
-
-        try {
-            const urlsSubidas = [];
-            for(let i=0; i < inputFotos.files.length; i++) {
-                const f = inputFotos.files[i];
-                if(f.size > 3 * 1024 * 1024) throw new Error("Una foto excede los 3MB");
-                
-                const blobWebp = await procesarImagenWebP(f);
-                const fileName = `${Date.now()}_${i}.webp`;
-                
-                const { data, error: upError } = await _supabase.storage
-                    .from('imagenes_comercios')
-                    .upload(fileName, blobWebp, { contentType: 'image/webp' });
-                
-                if(upError) throw upError;
-                const { data: pUrl } = _supabase.storage.from('imagenes_comercios').getPublicUrl(fileName);
-                urlsSubidas.push(pUrl.publicUrl);
-            }
-
-            const payload = {
-                Nombre: nombre, Dial: dial, Tipo: tipo, WhatsApp: ws,
-                Latitud: regCoords.lat, Longitud: regCoords.lon,
-                Email_propietario: email, Horario: horario,
-                Fotos_urls: urlsSubidas.join(','), Pago_confirmado: false
-            };
-
-            const { error } = await _supabase.from('Comercios').insert(payload);
-            if(!error) window.location.href = `https://wa.me/584247573426?text=Hola, activaré mi comercio: ${nombre}`;
-            else throw error;
-
-        } catch (e) {
-            alert("Error: " + e.message);
-            btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false;
-        }
+        const { error } = await _supabase.from('Comercios').insert(payload);
+        if(!error) window.location.href = `https://wa.me/584247573426?text=Hola, activaré mi comercio: ${payload.Nombre}`;
+        else { alert("Error al guardar. Revisa los datos."); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; }
     }
 
-    // [MEJORA] SENSIBILIDAD DEL DIAL REDUCIDA (0.015)
+    // --- FUNCIONES DE SOPORTE ---
     function setupCarousel(dIdx, total) {
         const car = document.getElementById(`car-${dIdx}`);
         let sX = 0, moved = false;
         car.ontouchstart = e => { sX = e.touches[0].pageX; car.style.transition = 'none'; };
-        car.ontouchmove = e => { 
-            let d = (e.touches[0].pageX - sX) * 0.015; 
-            updateRot(dIdx, rotations[dIdx] + d, total); 
-            moved = true; 
-        };
-        car.ontouchend = () => { 
-            if(!moved) return; 
-            rotations[dIdx] = Math.round(rotations[dIdx]/40)*40; 
-            car.style.transition = 'transform 0.5s'; 
-            updateRot(dIdx, rotations[dIdx], total); 
-            moved = false;
-        };
+        car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.1; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
+        car.ontouchend = () => { if(!moved) return; rotations[dIdx] = Math.round(rotations[dIdx]/40)*40; car.style.transition = 'transform 0.5s'; updateRot(dIdx, rotations[dIdx], total); };
     }
 
     function updateRot(dIdx, val, total) {
@@ -400,7 +321,6 @@
             userCoords = {lat: p.coords.latitude, lon: p.coords.longitude};
             L.circle([userCoords.lat, userCoords.lon], {radius: 40, color: 'blue'}).addTo(map);
         });
-        // [MEJORA] SPLASH SCREEN MÁS RÁPIDO (300ms a 100ms opcional, dejado en 300ms para estabilidad)
         setTimeout(() => document.getElementById('splash-screen').classList.add('fade-out'), 300);
     };
 </script>
