@@ -54,7 +54,7 @@
         .dial-wrapper { width: 100%; height: 160px; margin-bottom: 10px; }
         .dial-label { 
             font-size: 0.75rem; font-weight: 800; text-transform: uppercase; 
-            color: var(--navy-deep); text-align: center; margin-bottom: 8px; letter-spacing: 1px;
+            color: var(--navy-deep); text-align: center; margin-bottom: 12px; letter-spacing: 1px;
         }
         .scene { width: 100%; height: 100px; perspective: 1000px; display: flex; justify-content: center; }
         .carousel { width: 140px; height: 90px; position: absolute; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
@@ -262,7 +262,7 @@
         const car = document.getElementById(`car-${dIdx}`);
         let sX = 0, moved = false;
         car.ontouchstart = e => { sX = e.touches[0].pageX; car.style.transition = 'none'; };
-        car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.5; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
+        car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.25; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
         car.ontouchend = () => { if(!moved) return; rotations[dIdx] = Math.round(rotations[dIdx]/40)*40; car.style.transition = 'transform 0.5s'; updateRot(dIdx, rotations[dIdx], total); };
     }
 
@@ -321,7 +321,7 @@
             userCoords = {lat: p.coords.latitude, lon: p.coords.longitude};
             L.circle([userCoords.lat, userCoords.lon], {radius: 40, color: 'blue'}).addTo(map);
         });
-        setTimeout(() => document.getElementById('splash-screen').classList.add('fade-out'), 1200);
+        setTimeout(() => document.getElementById('splash-screen').classList.add('fade-out'), 600);
     };
 </script>
 </body>
