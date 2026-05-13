@@ -262,7 +262,7 @@
         const car = document.getElementById(`car-${dIdx}`);
         let sX = 0, moved = false;
         car.ontouchstart = e => { sX = e.touches[0].pageX; car.style.transition = 'none'; };
-        car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.12; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
+        car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.05; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
         car.ontouchend = () => { if(!moved) return; rotations[dIdx] = Math.round(rotations[dIdx]/40)*40; car.style.transition = 'transform 0.5s'; updateRot(dIdx, rotations[dIdx], total); };
     }
 
