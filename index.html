@@ -99,15 +99,6 @@
         }
 
         #map { width: 100%; flex: 1; min-height: 400px; }
-        /* Añadir al final de tu sección de estilos */
-.leaflet-popup-content-wrapper { border-radius: 15px; padding: 5px; }
-.popup-gallery { display: flex; gap: 5px; margin: 10px 0; overflow-x: auto; }
-.popup-img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
-.btn-ws-popup { 
-    background: #25d366; color: white; border: none; padding: 8px; 
-    border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer;
-}
-        .error-msg { color: #d90429; font-size: 0.7rem; font-weight: bold; margin-top: -12px; margin-bottom: 10px; display: none; }
     </style>
 </head>
 <body>
@@ -271,7 +262,7 @@
         const car = document.getElementById(`car-${dIdx}`);
         let sX = 0, moved = false;
         car.ontouchstart = e => { sX = e.touches[0].pageX; car.style.transition = 'none'; };
-        car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.05; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
+        car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.8; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
         car.ontouchend = () => { if(!moved) return; rotations[dIdx] = Math.round(rotations[dIdx]/40)*40; car.style.transition = 'transform 0.5s'; updateRot(dIdx, rotations[dIdx], total); };
     }
 
@@ -330,7 +321,7 @@
             userCoords = {lat: p.coords.latitude, lon: p.coords.longitude};
             L.circle([userCoords.lat, userCoords.lon], {radius: 40, color: 'blue'}).addTo(map);
         });
-        setTimeout(() => document.getElementById('splash-screen').classList.add('fade-out'), 300);
+        setTimeout(() => document.getElementById('splash-screen').classList.add('fade-out'), 1200);
     };
 </script>
 </body>
