@@ -159,15 +159,15 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
- let map, markersLayer, userCoords, regCoords;
+
+let map, markersLayer, userCoords, regCoords;
 let rotations = new Array(10).fill(0);
+let radiusCircle = null; // Variable global para controlar el dibujo del radio en el mapa
 
 const categoriasConfig = ["GASTRONOMIA", "SALUD Y BIENESTAR", "ESTILO Y BELLEZA", "HOGAR Y CONSTRUCCION", "AUTOMOTRIZ", "DIESEL E INDUSTRIA", "INSUMOS Y DISTRIBUCION", "TECNOLOGIA Y COMUNICACION", "SERVICIOS Y LOGISTICA", "EXCLUSIVO"];
 
-// --- UTILIDADES DE LIMPIEZA Y COMPRESIÓN (NUEVO) ---
-const formatText = (text) => {
-  return text ? text.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
-};
+// --- UTILIDADES DE LIMPIEZA Y COMPRESIÓN ---
+const formatText = (text) => text ? text.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
 
 const compressImage = (file) => {
   return new Promise((resolve) => {
@@ -178,19 +178,79 @@ const compressImage = (file) => {
       img.src = e.target.result;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800; // Resolución optimizada para PWA
+        const MAX_WIDTH = 800; 
         const scaleSize = MAX_WIDTH / img.width;
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * scaleSize;
+        canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7); // 70% calidad
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7); 
       };
     };
   });
 };
 
-// [MARCADOR-ADMIN] LÓGICA DEL CONTADOR (FACTOR 1.4)
+// --- LOGICA DE ESTADO ABIERTO/CERRADO ---
+function calcularEstadoHorario(horarioStr) {
+  try {
+    if(!horarioStr) return `<span style='color:#7a8a99; font-weight:bold;'>🕒 HORARIO NO DEFINIDO</span>`;
+    if(horarioStr.includes("24 HORAS")) return `<span style='color:#25D366; font-weight:bold;'>🟢 ABIERTO 24 HORAS</span>`;
+
+    const now = new Date();
+    const currentHour = now.getHours(); 
+    const currentMins = now.getMinutes();
+    const currentTime = currentHour + currentMins/60;
+
+    const regex = /(\d{1,2})[:.]?(\d{0,2})\s*(AM|PM)?\s*[-A]\s*(\d{1,2})[:.]?(\d{0,2})\s*(AM|PM)?/;
+    const match = horarioStr.match(regex);
+    
+    if(!match) return `<span style='color:#7a8a99; font-weight:bold;'>🕒 ${horarioStr}</span>`;
+
+    let [ , h1, m1, p1, h2, m2, p2 ] = match;
+    h1 = parseInt(h1); m1 = parseInt(m1||0);
+    h2 = parseInt(h2); m2 = parseInt(m2||0);
+
+    if(p1 === 'PM' && h1 !== 12) h1 += 12;
+    if(p1 === 'AM' && h1 === 12) h1 = 0;
+    if(p2 === 'PM' && h2 !== 12) h2 += 12;
+    if(p2 === 'AM' && h2 === 12) h2 = 0;
+
+    const openTime = h1 + m1/60;
+    const closeTime = h2 + m2/60;
+
+    let isAbierto = (closeTime > openTime) ? (currentTime >= openTime && currentTime < closeTime) : (currentTime >= openTime || currentTime < closeTime);
+
+    if(isAbierto) return `<span style='color:#25D366; font-weight:bold;'>🟢 ABIERTO AHORA</span>`;
+    return `<span style='color:#e63946; font-weight:bold;'>🔴 CERRADO (Abre a las ${h1}:${m1||'00'} ${p1||''})</span>`;
+  } catch(e) {
+    return `<span style='color:#7a8a99; font-weight:bold;'>🕒 ${horarioStr}</span>`;
+  }
+}
+
+// --- GENERADOR DEL POPUP PREMIUM ---
+function generarPopup(c) {
+  let fotosHTML = '';
+  if(c.Fotos_urls && Array.isArray(c.Fotos_urls) && c.Fotos_urls.length > 0) {
+    fotosHTML = `<div style="display:flex; overflow-x:auto; gap:6px; margin-bottom:10px; padding-bottom:5px;">` + 
+      c.Fotos_urls.map(url => `<img src="${url}" style="width:75px; height:75px; object-fit:cover; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.15); flex-shrink:0;">`).join('') + 
+      `</div>`;
+  }
+  
+  const estado = calcularEstadoHorario(c.Horario);
+  
+  return `
+    <div style="min-width: 230px; font-family: 'Segoe UI', sans-serif;">
+      <h3 style="margin: 0 0 8px 0; color: var(--navy-deep); font-size:1.1rem; text-transform:uppercase; letter-spacing: -0.5px;">${c.Nombre}</h3>
+      ${fotosHTML}
+      <div style="font-size: 0.85rem; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px;">${estado}</div>
+      <a href="https://wa.me/${c.WhatsApp}?text=Hola, acabo de ver su comercio en CERK." target="_blank" 
+         style="display:block; text-align:center; background:#25D366; color:white; padding:12px; border-radius:12px; text-decoration:none; font-weight:bold; box-shadow:0 4px 10px rgba(37,211,102,0.3); font-size:0.9rem;">
+         📞 Contactar por WhatsApp
+      </a>
+    </div>
+  `;
+}
+
+// [MARCADOR-ADMIN] LÓGICA DEL CONTADOR
 async function initContador() {
   const hoy = new Date().toISOString().split('T')[0];
   const { data } = await _supabase.from('vistas_diarias').select('*').eq('fecha', hoy).single();
@@ -229,112 +289,98 @@ async function cargarDiales() {
   });
 }
 
-// [MARCADOR-ADMIN] LÓGICA RADIAL INTELIGENTE
+// [MARCADOR-ADMIN] LÓGICA RADIAL INTELIGENTE (BÚSQUEDA EN MAPA)
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371;
-  const dLat = (lat2-lat1) * Math.PI/180;
-  const dLon = (lon2-lon1) * Math.PI/180;
+  const dLat = (lat2-lat1) * Math.PI/180; const dLon = (lon2-lon1) * Math.PI/180;
   const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
 async function buscarCerca(tipo, radio) {
   markersLayer.clearLayers();
+  if(radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
+
+  // 1. Dibujar el círculo de escaneo actual
+  radiusCircle = L.circle([userCoords.lat, userCoords.lon], {
+    radius: radio * 1000, color: 'var(--accent-blue)', fillColor: 'var(--accent-blue)', fillOpacity: 0.1, weight: 2
+  }).addTo(map);
+
   const { data } = await _supabase.from('Comercios').select('*').eq('Tipo', tipo).eq('Pago_confirmado', true);
-  if(!data) return;
+  
+  if(!data || data.length === 0) {
+    if(radiusCircle) map.removeLayer(radiusCircle);
+    alert(`Aún no hay comercios del rubro "${tipo}" registrados en Cerk.`);
+    return;
+  }
+
   const filtrados = data.filter(c => getDistance(userCoords.lat, userCoords.lon, c.Latitud, c.Longitud) <= radio);
   
+  // 2. Si encuentra dentro del radio actual, los pinta
   if(filtrados.length >= 1) {
-    filtrados.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(`<b>${c.Nombre}</b><br>${c.Horario}`));
-    map.fitBounds(filtrados.map(c => [c.Latitud, c.Longitud]));
-  } else if(radio < 1.5) {
+    filtrados.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(generarPopup(c)));
+    map.fitBounds(filtrados.map(c => [c.Latitud, c.Longitud]), { padding: [50, 50] });
+  } 
+  // 3. Si no encuentra, expande el radio recursivamente
+  else if(radio < 1.5) {
     const proxRadio = radio === 0.3 ? 0.8 : 1.5;
     buscarCerca(tipo, proxRadio);
-  } else {
-    if(confirm("No hay comercios a 1.5km. ¿Ver todos en la zona?")) {
-      data.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(c.Nombre));
+  } 
+  // 4. Si llegó a 1.5km y no hay nada, ofrece mapa global
+  else {
+    if(confirm(`No encontramos "${tipo}" a menos de 1.5km. ¿Deseas ver todos los disponibles a nivel global?`)) {
+      if(radiusCircle) map.removeLayer(radiusCircle); // Borramos el circulo local para vista global
+      data.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(generarPopup(c)));
+      map.fitBounds(data.map(c => [c.Latitud, c.Longitud]), { padding: [50, 50] });
+    } else {
+      if(radiusCircle) map.removeLayer(radiusCircle);
     }
   }
 }
 
-// --- SISTEMA DE VALIDACIÓN EN TIEMPO REAL (NUEVO) ---
+// --- SISTEMA DE VALIDACIÓN EN TIEMPO REAL (FORMULARIO) ---
 function initValidacionesFormulario() {
-  const wsInput = document.getElementById('reg-ws');
-  const emailInput = document.getElementById('reg-email');
-  const fotosInput = document.getElementById('reg-fotos');
+  const wsInput = document.getElementById('reg-ws'); const emailInput = document.getElementById('reg-email'); const fotosInput = document.getElementById('reg-fotos');
   
   wsInput.addEventListener('blur', () => {
     const v = wsInput.value.trim();
-    if(v && !/^\d{10,12}$/.test(v)) {
-      alert("El número debe tener entre 10 y 12 dígitos (Ej: 584120000000).");
-      wsInput.value = ''; 
-    }
+    if(v && !/^\d{10,12}$/.test(v)) { alert("El número debe tener entre 10 y 12 dígitos (Ej: 584120000000)."); wsInput.value = ''; }
     checkFormValidity();
   });
 
   emailInput.addEventListener('blur', () => {
     const v = emailInput.value.trim();
-    if(v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
-      alert("El correo ingresado no es válido.");
-      emailInput.value = '';
-    }
+    if(v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { alert("El correo ingresado no es válido."); emailInput.value = ''; }
     checkFormValidity();
   });
 
   fotosInput.addEventListener('change', () => {
     const files = fotosInput.files;
     if(files.length > 0) {
-      if(files.length < 2 || files.length > 3) {
-        alert("Debes seleccionar 2 o 3 fotos exactamente.");
-        fotosInput.value = ''; 
-        checkFormValidity();
-        return;
-      }
+      if(files.length < 2 || files.length > 3) { alert("Debes seleccionar 2 o 3 fotos exactamente."); fotosInput.value = ''; checkFormValidity(); return; }
       for(let i=0; i<files.length; i++) {
-        if(files[i].size > 3145728) { 
-          alert(`La foto #${i+1} pesa más de 3MB. Por favor elige imágenes más ligeras.`);
-          fotosInput.value = '';
-          checkFormValidity();
-          return;
-        }
+        if(files[i].size > 3145728) { alert(`La foto #${i+1} pesa más de 3MB. Por favor elige imágenes más ligeras.`); fotosInput.value = ''; checkFormValidity(); return; }
       }
     }
     checkFormValidity();
   });
 
-  document.querySelectorAll('#reg-ui input, #reg-ui select').forEach(el => {
-    el.addEventListener('input', checkFormValidity);
-    el.addEventListener('change', checkFormValidity);
-  });
+  document.querySelectorAll('#reg-ui input, #reg-ui select').forEach(el => { el.addEventListener('input', checkFormValidity); el.addEventListener('change', checkFormValidity); });
 }
 
 function checkFormValidity() {
   const btn = document.getElementById('btn-activar');
-  const nombre = document.getElementById('reg-nombre').value;
-  const dial = document.getElementById('reg-dial').value;
-  const sub = document.getElementById('reg-sub').value;
-  const tipo = document.getElementById('reg-tipo').value;
-  const ws = document.getElementById('reg-ws').value;
-  const email = document.getElementById('reg-email').value;
-  const horario = document.getElementById('reg-horario').value;
-  const fotos = document.getElementById('reg-fotos').files;
+  const nombre = document.getElementById('reg-nombre').value; const dial = document.getElementById('reg-dial').value; const sub = document.getElementById('reg-sub').value; const tipo = document.getElementById('reg-tipo').value; const ws = document.getElementById('reg-ws').value; const email = document.getElementById('reg-email').value; const horario = document.getElementById('reg-horario').value; const fotos = document.getElementById('reg-fotos').files;
   const gpsCapturado = typeof regCoords !== 'undefined' && regCoords !== null;
 
-  if(nombre && dial && sub && tipo && ws && email && horario && (fotos.length >= 2 && fotos.length <= 3) && gpsCapturado) {
-    btn.disabled = false;
-    btn.style.opacity = '1';
-  } else {
-    btn.disabled = true;
-    btn.style.opacity = '0.5';
-  }
+  if(nombre && dial && sub && tipo && ws && email && horario && (fotos.length >= 2 && fotos.length <= 3) && gpsCapturado) { btn.disabled = false; btn.style.opacity = '1'; } 
+  else { btn.disabled = true; btn.style.opacity = '0.5'; }
 }
 
-// [MARCADOR-ADMIN] COMPRESIÓN Y REGISTRO (ACTUALIZADO)
+// [MARCADOR-ADMIN] COMPRESIÓN Y REGISTRO
 async function procesarRegistro() {
   const btn = document.getElementById('btn-activar');
-  btn.innerText = "PROCESANDO..."; 
-  btn.disabled = true;
-  btn.style.opacity = '0.5';
+  btn.innerText = "PROCESANDO..."; btn.disabled = true; btn.style.opacity = '0.5';
 
   const files = document.getElementById('reg-fotos').files;
   let fotosUrls = [];
@@ -344,64 +390,39 @@ async function procesarRegistro() {
     const fileName = `${Date.now()}_${i}.jpg`;
     
     const { error } = await _supabase.storage.from('imagenes_comercios').upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
-    if (error) { 
-      alert("Error al subir fotos. Reintenta."); 
-      btn.innerText = "ACTIVAR Y PAGAR"; 
-      btn.disabled = false; 
-      btn.style.opacity = '1'; 
-      return; 
-    }
+    if (error) { alert("Error al subir fotos. Reintenta."); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1'; return; }
 
     const { data: urlData } = _supabase.storage.from('imagenes_comercios').getPublicUrl(fileName);
     fotosUrls.push(urlData.publicUrl);
   }
 
   const payload = {
-    Nombre: formatText(document.getElementById('reg-nombre').value),
-    Dial: formatText(document.getElementById('reg-dial').value),
-    Tipo: formatText(document.getElementById('reg-tipo').value),
-    WhatsApp: document.getElementById('reg-ws').value.trim(),
-    Latitud: regCoords.lat, 
-    Longitud: regCoords.lon,
-    Email_propietario: formatText(document.getElementById('reg-email').value),
-    Horario: formatText(document.getElementById('reg-horario').value),
-    Fotos_urls: fotosUrls,
-    Pago_confirmado: false
+    Nombre: formatText(document.getElementById('reg-nombre').value), Dial: formatText(document.getElementById('reg-dial').value), Tipo: formatText(document.getElementById('reg-tipo').value), WhatsApp: document.getElementById('reg-ws').value.trim(), Latitud: regCoords.lat, Longitud: regCoords.lon, Email_propietario: formatText(document.getElementById('reg-email').value), Horario: formatText(document.getElementById('reg-horario').value), Fotos_urls: fotosUrls, Pago_confirmado: false
   };
 
   const { error } = await _supabase.from('Comercios').insert(payload);
   
   if(!error) {
-    // Limpieza de formulario en segundo plano
     document.querySelectorAll('#reg-ui input').forEach(el => el.value = '');
-    document.getElementById('reg-sub').innerHTML = '<select disabled></select>';
-    document.getElementById('reg-tipo').innerHTML = '<select disabled></select>';
-    document.getElementById('gps-status').style.display = 'none';
-    regCoords = null; 
-    btn.innerText = "ACTIVAR Y PAGAR"; 
-    
+    document.getElementById('reg-sub').innerHTML = '<select disabled></select>'; document.getElementById('reg-tipo').innerHTML = '<select disabled></select>';
+    document.getElementById('gps-status').style.display = 'none'; regCoords = null; btn.innerText = "ACTIVAR Y PAGAR"; 
     irA('main-ui'); 
     window.location.href = `https://wa.me/584247573426?text=Hola, acabo de registrar mi comercio: ${payload.Nombre}. Solicito activacion.`;
   } else {
-    alert("Error de red. Intenta nuevamente.");
-    btn.innerText = "ACTIVAR Y PAGAR"; 
-    btn.disabled = false; 
-    btn.style.opacity = '1';
+    alert("Error de red. Intenta nuevamente."); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1';
   }
 }
 
-// --- FUNCIONES DE SOPORTE ---
+// --- NAVEGACIÓN Y SOPORTE DE INTERFAZ ---
 function setupCarousel(dIdx, total) {
-  const car = document.getElementById(`car-${dIdx}`);
-  let sX = 0, moved = false;
+  const car = document.getElementById(`car-${dIdx}`); let sX = 0, moved = false;
   car.ontouchstart = e => { sX = e.touches[0].pageX; car.style.transition = 'none'; };
   car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.5; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
   car.ontouchend = () => { if(!moved) return; rotations[dIdx] = Math.round(rotations[dIdx]/40)*40; car.style.transition = 'transform 0.5s'; updateRot(dIdx, rotations[dIdx], total); };
 }
 
 function updateRot(dIdx, val, total) {
-  rotations[dIdx] = val;
-  const car = document.getElementById(`car-${dIdx}`);
+  rotations[dIdx] = val; const car = document.getElementById(`car-${dIdx}`);
   if(car) car.style.transform = `rotateY(${val}deg)`;
   for(let i=0; i<total; i++) {
     const el = document.getElementById(`it-${dIdx}-${i}`);
@@ -416,78 +437,59 @@ async function abrirMapa(subNombre) {
   container.innerHTML = '';
   data.busqueda.split(',').forEach(tipo => {
     const b = document.createElement('button'); b.className = 'globito'; b.innerText = tipo.trim();
-    b.onclick = () => buscarCerca(tipo.trim(), 0.3);
+    b.onclick = () => buscarCerca(tipo.trim(), 0.3); // Dispara la búsqueda al presionar el globito
     container.appendChild(b);
   });
 }
 
 function irA(id) { 
+  // Magia de Limpieza de Caché: Al salir al menú, borramos la búsqueda anterior
+  if(id === 'main-ui') {
+    if(markersLayer) markersLayer.clearLayers();
+    if(radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
+    document.getElementById('filter-container').innerHTML = ''; 
+    document.getElementById('map-title').innerText = 'MAPA';
+  }
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
   document.getElementById(id).classList.add('active');
-  if(id==='map-view') setTimeout(()=>map.invalidateSize(), 300); 
-}
-
-function mostrarRegistro() { 
-  const w = document.getElementById('welcome-screen');
-  w.style.display='flex'; setTimeout(() => { w.classList.add('fade-out'); irA('reg-ui'); }, 1600); 
-}
-
-function capturarGPS() { 
-  navigator.geolocation.getCurrentPosition(p => { 
-    regCoords = {lat: p.coords.latitude, lon: p.coords.longitude};
-    document.getElementById('gps-status').style.display='block'; 
-    checkFormValidity();
-  }); 
-}
-
-function popularSelectCategorias() { 
-  const s = document.getElementById('reg-dial');
-  categoriasConfig.forEach(c => s.innerHTML += `<option value="${c}">${c}</option>`); 
-}
-
-// SELECTORES EN CASCADA (ACTUALIZADOS)
-async function actualizarSubcategorias() {
-  const cat = document.getElementById('reg-dial').value;
-  const sub = document.getElementById('reg-sub');
-  const tipo = document.getElementById('reg-tipo');
   
-  sub.innerHTML = '<option value="">Cargando...</option>';
-  tipo.innerHTML = '<option value="">Selecciona...</option>';
-  tipo.disabled = true;
+  if(id==='map-view') {
+    setTimeout(() => {
+      map.invalidateSize();
+      if(userCoords) map.setView([userCoords.lat, userCoords.lon], 14); // Devuelve la cámara al usuario
+    }, 300); 
+  }
+}
 
+function mostrarRegistro() { const w = document.getElementById('welcome-screen'); w.style.display='flex'; setTimeout(() => { w.classList.add('fade-out'); irA('reg-ui'); }, 1600); }
+
+function capturarGPS() { navigator.geolocation.getCurrentPosition(p => { regCoords = {lat: p.coords.latitude, lon: p.coords.longitude}; document.getElementById('gps-status').style.display='block'; checkFormValidity(); }); }
+
+function popularSelectCategorias() { const s = document.getElementById('reg-dial'); categoriasConfig.forEach(c => s.innerHTML += `<option value="${c}">${c}</option>`); }
+
+async function actualizarSubcategorias() {
+  const cat = document.getElementById('reg-dial').value; const sub = document.getElementById('reg-sub'); const tipo = document.getElementById('reg-tipo');
+  sub.innerHTML = '<option value="">Cargando...</option>'; tipo.innerHTML = '<option value="">Selecciona...</option>'; tipo.disabled = true;
   if(!cat) { sub.disabled = true; checkFormValidity(); return; }
-
   const { data } = await _supabase.from('categorias').select('nombre').eq('grupo', cat);
-  sub.innerHTML = '<option value="">Selecciona...</option>';
-  data.forEach(d => sub.innerHTML += `<option value="${d.nombre}">${d.nombre}</option>`);
-  sub.disabled = false;
-  checkFormValidity();
+  sub.innerHTML = '<option value="">Selecciona...</option>'; data.forEach(d => sub.innerHTML += `<option value="${d.nombre}">${d.nombre}</option>`);
+  sub.disabled = false; checkFormValidity();
 }
 
 async function actualizarSubdivisiones() {
-  const subNombre = document.getElementById('reg-sub').value;
-  const tipo = document.getElementById('reg-tipo');
-  
+  const subNombre = document.getElementById('reg-sub').value; const tipo = document.getElementById('reg-tipo');
   tipo.innerHTML = '<option value="">Cargando...</option>';
-  
   if(!subNombre) { tipo.disabled = true; checkFormValidity(); return; }
-
   const { data } = await _supabase.from('categorias').select('busqueda').eq('nombre', subNombre).single();
   tipo.innerHTML = '<option value="">Selecciona...</option>';
-  if(data && data.busqueda) {
-    data.busqueda.split(',').forEach(t => tipo.innerHTML += `<option value="${t.trim()}">${t.trim()}</option>`);
-    tipo.disabled = false;
-  }
+  if(data && data.busqueda) { data.busqueda.split(',').forEach(t => tipo.innerHTML += `<option value="${t.trim()}">${t.trim()}</option>`); tipo.disabled = false; }
   checkFormValidity();
 }
 
-// ARRANQUE DE LA APP
+// ARRANQUE
 window.onload = () => {
-  initValidacionesFormulario();
-  checkFormValidity();
-  initContador();
-  cargarDiales();
-  popularSelectCategorias();
+  initValidacionesFormulario(); checkFormValidity(); initContador(); cargarDiales(); popularSelectCategorias();
   
   map = L.map('map').setView([7.767, -72.230], 14);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -495,11 +497,12 @@ window.onload = () => {
   
   navigator.geolocation.getCurrentPosition(p => {
     userCoords = {lat: p.coords.latitude, lon: p.coords.longitude};
-    L.circle([userCoords.lat, userCoords.lon], {radius: 40, color: 'blue'}).addTo(map);
+    L.circle([userCoords.lat, userCoords.lon], {radius: 40, color: '#0a192f', fillOpacity: 1}).addTo(map).bindPopup("<b>Estás aquí</b>");
   });
   
   setTimeout(() => document.getElementById('splash-screen').classList.add('fade-out'), 1200);
 };
+
 </script>
 </body>
 </html>
