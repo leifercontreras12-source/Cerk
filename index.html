@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --navy-deep: #0d213b; /* Azul Icono de la manito */
+  --navy-deep: #173b66; /* Azul Icono aclarado un 7% */
   --accent-blue: #00b4d8;
   --white: #ffffff;
   --glass: rgba(255, 255, 255, 0.85);
@@ -35,12 +35,12 @@ body {
 #welcome-screen {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: var(--navy-deep); color: var(--white); 
-  display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 99998;
+  display: none; flex-direction: column; justify-content: flex-start; align-items: flex-start; z-index: 99998;
   transition: opacity 0.6s ease-out;
 }
 .fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
 
-/* Estética Original del Encabezado (INTACTO) */
+/* Estética Original del Encabezado */
 .brand {
   background: var(--white); width: 100%; height: 75px;
   display: flex; justify-content: center; align-items: center;
@@ -53,23 +53,22 @@ body {
 /* Contadores estilo Píldora Premium */
 .stat-box { 
   position: absolute; font-size: 0.65rem; color: var(--navy-deep); font-weight: 800;
-  text-align: center; background: rgba(13, 33, 59, 0.08); 
+  text-align: center; background: rgba(23, 59, 102, 0.08); 
   padding: 6px 12px; border-radius: 20px; line-height: 1.2;
 }
 #count_hoy { left: 15px; }
 #count_mes { right: 15px; }
 
-/* Diales 3D Premium */
-.dial-container { width: 100%; padding: 25px 0 10px 0; }
-.dial-wrapper { width: 100%; height: 160px; margin-bottom: 15px; }
+/* Diales 3D Premium (Ahora más compactos) */
+.dial-container { width: 100%; padding: 15px 0 5px 0; }
+.dial-wrapper { width: 100%; height: 135px; margin-bottom: 5px; }
 .dial-label {
   font-size: 0.8rem; font-weight: 800; text-transform: uppercase;
-  color: var(--navy-deep); text-align: center; margin-bottom: 12px; letter-spacing: 1px;
+  color: var(--navy-deep); text-align: center; margin-bottom: 6px; letter-spacing: 1px;
 }
 .scene { width: 100%; height: 100px; perspective: 1000px; display: flex; justify-content: center; }
 .carousel { 
   width: 140px; height: 90px; position: absolute; transform-style: preserve-3d;
-  /* Físicas más suaves para el táctil */
   transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1); 
 }
 .carousel__item {
@@ -97,7 +96,7 @@ body {
   background: var(--navy-deep); color: var(--white);
   border: none; padding: 18px; border-radius: 50px;
   font-weight: 900; font-size: 1rem; letter-spacing: 0.5px;
-  cursor: pointer; box-shadow: 0 8px 25px rgba(13, 33, 59, 0.3); transition: 0.3s;
+  cursor: pointer; box-shadow: 0 8px 25px rgba(23, 59, 102, 0.3); transition: 0.3s;
 }
 .btn-navy:active { transform: scale(0.96); }
 
@@ -139,8 +138,10 @@ body {
 </div>
 
 <div id="welcome-screen">
-  <h2 style="font-family: 'Georgia', serif; font-style: italic; font-weight: normal; font-size: 1.8rem; margin-bottom: -10px; color: white;">bienvenido a</h2>
-  <h1 style="font-family: 'Segoe UI', sans-serif; font-size: 4.5rem; font-weight: 900; letter-spacing: -2px; margin: 0; color: white;">+CERK</h1>
+  <div style="width: 100%; padding-left: 10%; margin-top: 25vh;">
+    <h2 style="font-family: 'Georgia', serif; font-style: italic; font-weight: normal; font-size: 1.8rem; margin-bottom: -10px; color: white;">bienvenido a</h2>
+    <h1 style="font-family: 'Segoe UI', sans-serif; font-size: 4.5rem; font-weight: 900; letter-spacing: -2px; margin: 0; color: white;">+CERK</h1>
+  </div>
 </div>
 
 <div id="main-ui" class="screen active">
@@ -170,8 +171,8 @@ body {
     <div class="form-group"><label>Horario</label><input type="text" id="reg-horario" placeholder="8:00am - 6:00pm"></div>
     <div class="form-group"><label>Fotos (Min 2)</label><input type="file" id="reg-fotos" multiple accept="image/*"></div>
     
-    <button class="btn-navy" style="background: #7a8a99; margin-bottom: 10px;" onclick="capturarGPS()">Capturar GPS</button>
-    <p id="gps-status" style="display:none; color: #25D366; text-align: center; font-weight: bold; font-size: 0.8rem; margin-bottom: 15px;">Ubicación Lista ✓</p>
+    <!-- Botón GPS Preparado -->
+    <button class="btn-navy" id="btn-gps" style="background: #7a8a99; margin-bottom: 25px; width: 100%; transition: background 0.4s;" onclick="capturarGPS()">Capturar GPS</button>
     
     <button class="btn-navy" id="btn-activar" onclick="procesarRegistro()" style="width: 100%;">ACTIVAR Y PAGAR</button>
     <button onclick="irA('main-ui')" style="border:none; background:none; width:100%; margin-top:15px; color: #7a8a99; font-weight: bold; font-size: 0.9rem;">Volver al Inicio</button>
@@ -196,9 +197,17 @@ body {
 
 let map, markersLayer, userCoords, regCoords;
 let rotations = new Array(10).fill(0);
-let radiusCircle = null; // Variable global para controlar el dibujo del radio en el mapa
+let radiusCircle = null;
 
 const categoriasConfig = ["GASTRONOMIA", "SALUD Y BIENESTAR", "ESTILO Y BELLEZA", "HOGAR Y CONSTRUCCION", "AUTOMOTRIZ", "DIESEL E INDUSTRIA", "INSUMOS Y DISTRIBUCION", "TECNOLOGIA Y COMUNICACION", "SERVICIOS Y LOGISTICA", "EXCLUSIVO"];
+
+// --- CONFIGURACIÓN DEL PIN PERSONALIZADO ---
+const cerkIcon = L.icon({
+  iconUrl: 'pin_cerk.webp',
+  iconSize: [45, 45], // Tamaño del pin
+  iconAnchor: [22, 45], // La punta del pin apuntando al centro inferior
+  popupAnchor: [0, -40] // Donde nace el pop-up relativo al pin
+});
 
 // --- UTILIDADES DE LIMPIEZA Y COMPRESIÓN ---
 const formatText = (text) => text ? text.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
@@ -265,15 +274,13 @@ function generarPopup(c) {
   let fotosHTML = '';
   if(c.Fotos_urls && Array.isArray(c.Fotos_urls) && c.Fotos_urls.length > 0) {
     fotosHTML = `<div style="display:flex; overflow-x:auto; gap:6px; margin-bottom:10px; padding-bottom:5px;">` + 
-      c.Fotos_urls.map(url => `<img src="${url}" style="width:75px; height:75px; object-fit:cover; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.15); flex-shrink:0;">`).join('') + 
+      c.Fotos_urls.map(url => `<img src="${url}" style="width:100px; height:100px; object-fit:cover; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.15); flex-shrink:0;">`).join('') + 
       `</div>`;
   }
-  
   const estado = calcularEstadoHorario(c.Horario);
-  
   return `
-    <div style="min-width: 230px; font-family: 'Segoe UI', sans-serif;">
-      <h3 style="margin: 0 0 8px 0; color: var(--navy-deep); font-size:1.1rem; text-transform:uppercase; letter-spacing: -0.5px;">${c.Nombre}</h3>
+    <div style="min-width: 240px; font-family: 'Segoe UI', sans-serif;">
+      <h3 style="margin: 0 0 8px 0; color: var(--navy-deep); font-size:1.15rem; text-transform:uppercase; letter-spacing: -0.5px;">${c.Nombre}</h3>
       ${fotosHTML}
       <div style="font-size: 0.85rem; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px;">${estado}</div>
       <a href="https://wa.me/${c.WhatsApp}?text=Hola, acabo de ver su comercio en CERK." target="_blank" 
@@ -335,7 +342,6 @@ async function buscarCerca(tipo, radio) {
   markersLayer.clearLayers();
   if(radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
 
-  // 1. Dibujar el círculo de escaneo actual
   radiusCircle = L.circle([userCoords.lat, userCoords.lon], {
     radius: radio * 1000, color: 'var(--accent-blue)', fillColor: 'var(--accent-blue)', fillOpacity: 0.1, weight: 2
   }).addTo(map);
@@ -350,21 +356,18 @@ async function buscarCerca(tipo, radio) {
 
   const filtrados = data.filter(c => getDistance(userCoords.lat, userCoords.lon, c.Latitud, c.Longitud) <= radio);
   
-  // 2. Si encuentra dentro del radio actual, los pinta
   if(filtrados.length >= 1) {
-    filtrados.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(generarPopup(c)));
+    filtrados.forEach(c => L.marker([c.Latitud, c.Longitud], {icon: cerkIcon}).addTo(markersLayer).bindPopup(generarPopup(c)));
     map.fitBounds(filtrados.map(c => [c.Latitud, c.Longitud]), { padding: [50, 50] });
   } 
-  // 3. Si no encuentra, expande el radio recursivamente
   else if(radio < 1.5) {
     const proxRadio = radio === 0.3 ? 0.8 : 1.5;
     buscarCerca(tipo, proxRadio);
   } 
-  // 4. Si llegó a 1.5km y no hay nada, ofrece mapa global
   else {
     if(confirm(`No encontramos "${tipo}" a menos de 1.5km. ¿Deseas ver todos los disponibles a nivel global?`)) {
-      if(radiusCircle) map.removeLayer(radiusCircle); // Borramos el circulo local para vista global
-      data.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(generarPopup(c)));
+      if(radiusCircle) map.removeLayer(radiusCircle); 
+      data.forEach(c => L.marker([c.Latitud, c.Longitud], {icon: cerkIcon}).addTo(markersLayer).bindPopup(generarPopup(c)));
       map.fitBounds(data.map(c => [c.Latitud, c.Longitud]), { padding: [50, 50] });
     } else {
       if(radiusCircle) map.removeLayer(radiusCircle);
@@ -439,7 +442,13 @@ async function procesarRegistro() {
   if(!error) {
     document.querySelectorAll('#reg-ui input').forEach(el => el.value = '');
     document.getElementById('reg-sub').innerHTML = '<select disabled></select>'; document.getElementById('reg-tipo').innerHTML = '<select disabled></select>';
-    document.getElementById('gps-status').style.display = 'none'; regCoords = null; btn.innerText = "ACTIVAR Y PAGAR"; 
+    
+    // Restaurar Botón GPS a su estado original (gris)
+    const btnGps = document.getElementById('btn-gps');
+    if(btnGps) { btnGps.style.background = '#7a8a99'; btnGps.innerText = 'Capturar GPS'; }
+    regCoords = null; 
+    
+    btn.innerText = "ACTIVAR Y PAGAR"; 
     irA('main-ui'); 
     window.location.href = `https://wa.me/584247573426?text=Hola, acabo de registrar mi comercio: ${payload.Nombre}. Solicito activacion.`;
   } else {
@@ -451,7 +460,8 @@ async function procesarRegistro() {
 function setupCarousel(dIdx, total) {
   const car = document.getElementById(`car-${dIdx}`); let sX = 0, moved = false;
   car.ontouchstart = e => { sX = e.touches[0].pageX; car.style.transition = 'none'; };
-  car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.5; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
+  // Fricción bajada de 0.5 a 0.15 para un giro premium
+  car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.15; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
   car.ontouchend = () => { if(!moved) return; rotations[dIdx] = Math.round(rotations[dIdx]/40)*40; car.style.transition = 'transform 0.5s'; updateRot(dIdx, rotations[dIdx], total); };
 }
 
@@ -471,13 +481,12 @@ async function abrirMapa(subNombre) {
   container.innerHTML = '';
   data.busqueda.split(',').forEach(tipo => {
     const b = document.createElement('button'); b.className = 'globito'; b.innerText = tipo.trim();
-    b.onclick = () => buscarCerca(tipo.trim(), 0.3); // Dispara la búsqueda al presionar el globito
+    b.onclick = () => buscarCerca(tipo.trim(), 0.3);
     container.appendChild(b);
   });
 }
 
 function irA(id) { 
-  // Magia de Limpieza de Caché: Al salir al menú, borramos la búsqueda anterior
   if(id === 'main-ui') {
     if(markersLayer) markersLayer.clearLayers();
     if(radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
@@ -491,14 +500,27 @@ function irA(id) {
   if(id==='map-view') {
     setTimeout(() => {
       map.invalidateSize();
-      if(userCoords) map.setView([userCoords.lat, userCoords.lon], 14); // Devuelve la cámara al usuario
+      if(userCoords) map.setView([userCoords.lat, userCoords.lon], 14);
     }, 300); 
   }
 }
 
 function mostrarRegistro() { const w = document.getElementById('welcome-screen'); w.style.display='flex'; setTimeout(() => { w.classList.add('fade-out'); irA('reg-ui'); }, 1600); }
 
-function capturarGPS() { navigator.geolocation.getCurrentPosition(p => { regCoords = {lat: p.coords.latitude, lon: p.coords.longitude}; document.getElementById('gps-status').style.display='block'; checkFormValidity(); }); }
+function capturarGPS() { 
+  navigator.geolocation.getCurrentPosition(p => { 
+    regCoords = {lat: p.coords.latitude, lon: p.coords.longitude}; 
+    
+    // Cambiar color y texto del botón GPS al instante
+    const btnGps = document.getElementById('btn-gps');
+    if(btnGps) {
+      btnGps.style.background = '#25D366'; // Verde WhatsApp
+      btnGps.innerText = 'Ubicación Capturada ✓';
+    }
+    
+    checkFormValidity(); 
+  }); 
+}
 
 function popularSelectCategorias() { const s = document.getElementById('reg-dial'); categoriasConfig.forEach(c => s.innerHTML += `<option value="${c}">${c}</option>`); }
 
@@ -531,12 +553,16 @@ window.onload = () => {
   
   navigator.geolocation.getCurrentPosition(p => {
     userCoords = {lat: p.coords.latitude, lon: p.coords.longitude};
-    L.circle([userCoords.lat, userCoords.lon], {radius: 40, color: '#0a192f', fillOpacity: 1}).addTo(map).bindPopup("<b>Estás aquí</b>");
+    L.circle([userCoords.lat, userCoords.lon], {radius: 40, color: '#173b66', fillOpacity: 1}).addTo(map).bindPopup("<b>Estás aquí</b>");
   });
   
-  setTimeout(() => document.getElementById('splash-screen').classList.add('fade-out'), 1200);
+  setTimeout(() => {
+    const splash = document.getElementById('splash-screen');
+    splash.classList.add('fade-out');
+    // Solución al Glitch de z-index: eliminarlo del DOM visualmente tras 500ms
+    setTimeout(() => splash.style.display = 'none', 500);
+  }, 1200);
 };
-
-</script>
+</script> 
 </body>
 </html>
