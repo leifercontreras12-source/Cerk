@@ -159,83 +159,12 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let map, markersLayer, userCoords, regCoords;
-    let rotations = new Array(10).fill(0);
+ let map, markersLayer, userCoords, regCoords;
+let rotations = new Array(10).fill(0);
 
-    const categoriasConfig = ["GASTRONOMIA", "SALUD Y BIENESTAR", "ESTILO Y BELLEZA", "HOGAR Y CONSTRUCCION", "AUTOMOTRIZ", "DIESEL E INDUSTRIA", "INSUMOS Y DISTRIBUCION", "TECNOLOGIA Y COMUNICACION", "SERVICIOS Y LOGISTICA", "EXCLUSIVO"];
+const categoriasConfig = ["GASTRONOMIA", "SALUD Y BIENESTAR", "ESTILO Y BELLEZA", "HOGAR Y CONSTRUCCION", "AUTOMOTRIZ", "DIESEL E INDUSTRIA", "INSUMOS Y DISTRIBUCION", "TECNOLOGIA Y COMUNICACION", "SERVICIOS Y LOGISTICA", "EXCLUSIVO"];
 
-    // [MARCADOR-ADMIN] LÓGICA DEL CONTADOR (FACTOR 1.4)
-    async function initContador() {
-        const hoy = new Date().toISOString().split('T')[0];
-        const { data } = await _supabase.from('vistas_diarias').select('*').eq('fecha', hoy).single();
-        
-        let actual = data ? data.conteo_real : 17; 
-        if(!data) await _supabase.from('vistas_diarias').insert({fecha: hoy, conteo_real: 17});
-        else await _supabase.from('vistas_diarias').update({conteo_real: actual + 1}).eq('fecha', hoy);
-
-        document.getElementById('count_hoy').innerHTML = `HOY<br>${Math.floor((actual+1) * 1.4)}`;
-        
-        const { data: todos } = await _supabase.from('vistas_diarias').select('conteo_real');
-        const mes = todos.reduce((a, b) => a + b.conteo_real, 0);
-        document.getElementById('count_mes').innerHTML = `MES<br>${Math.floor(mes * 1.4)}`;
-    }
-
-    // [MARCADOR-ADMIN] RECONSTRUCCIÓN DE DIALES 3D
-    async function cargarDiales() {
-        const root = document.getElementById('dials-root');
-        const { data: catData } = await _supabase.from('categorias').select('*').order('orden', {ascending: true});
-
-        categoriasConfig.forEach((catName, dIdx) => {
-            const wrap = document.createElement('div');
-            wrap.className = 'dial-wrapper';
-            wrap.innerHTML = `<div class="dial-label">${catName}</div><div class="scene"><div class="carousel" id="car-${dIdx}"></div></div>`;
-            root.appendChild(wrap);
-
-            const car = wrap.querySelector(`#car-${dIdx}`);
-            const subs = catData.filter(c => c.grupo === catName);
-
-            subs.forEach((s, iIdx) => {
-                const item = document.createElement('div');
-                item.className = 'carousel__item';
-                item.id = `it-${dIdx}-${iIdx}`;
-                item.innerHTML = `<img src="${s.imagen_url}" class="item-img"><div class="item-text">${s.nombre}</div>`;
-                item.onclick = () => abrirMapa(s.nombre);
-                car.appendChild(item);
-            });
-            setupCarousel(dIdx, subs.length);
-            updateRot(dIdx, 0, subs.length);
-        });
-    }
-
-    // [MARCADOR-ADMIN] LÓGICA RADIAL INTELIGENTE (0.3 - 0.8 - 1.5)
-    function getDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371;
-        const dLat = (lat2-lat1) * Math.PI/180;
-        const dLon = (lon2-lon1) * Math.PI/180;
-        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-    }
-
-    async function buscarCerca(tipo, radio) {
-        markersLayer.clearLayers();
-        const { data } = await _supabase.from('Comercios').select('*').eq('Tipo', tipo).eq('Pago_confirmado', true);
-        if(!data) return;
-
-        const filtrados = data.filter(c => getDistance(userCoords.lat, userCoords.lon, c.Latitud, c.Longitud) <= radio);
-
-        if(filtrados.length >= 1) {
-            filtrados.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(`<b>${c.Nombre}</b><br>${c.Horario}`));
-            map.fitBounds(filtrados.map(c => [c.Latitud, c.Longitud]));
-        } else if(radio < 1.5) {
-            const proxRadio = radio === 0.3 ? 0.8 : 1.5;
-            buscarCerca(tipo, proxRadio);
-        } else {
-            if(confirm("No hay comercios a 1.5km. ¿Ver todos en la zona?")) {
-                data.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(c.Nombre));
-            }
-        }
-    }
-// --- UTILIDADES DE LIMPIEZA Y COMPRESIÓN ---
+// --- UTILIDADES DE LIMPIEZA Y COMPRESIÓN (NUEVO) ---
 const formatText = (text) => {
   return text ? text.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
 };
@@ -249,154 +178,328 @@ const compressImage = (file) => {
       img.src = e.target.result;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800; // Resolución optimizada para móviles
+        const MAX_WIDTH = 800; // Resolución optimizada para PWA
         const scaleSize = MAX_WIDTH / img.width;
         canvas.width = MAX_WIDTH;
         canvas.height = img.height * scaleSize;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        // Convierte a JPG con 70% de calidad
-        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7);
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7); // 70% calidad
       };
     };
   });
 };
-    // [MARCADOR-ADMIN] COMPRESIÓN Y REGISTRO (VERSIÓN 2.0)
-async function procesarRegistro() {
-  const btn = document.getElementById('btn-activar');
-  btn.innerText = "PROCESANDO..."; btn.disabled = true;
 
-  // 1. Extraer Valores
+// [MARCADOR-ADMIN] LÓGICA DEL CONTADOR (FACTOR 1.4)
+async function initContador() {
+  const hoy = new Date().toISOString().split('T')[0];
+  const { data } = await _supabase.from('vistas_diarias').select('*').eq('fecha', hoy).single();
+  let actual = data ? data.conteo_real : 17;
+  if(!data) await _supabase.from('vistas_diarias').insert({fecha: hoy, conteo_real: 17});
+  else await _supabase.from('vistas_diarias').update({conteo_real: actual + 1}).eq('fecha', hoy);
+  document.getElementById('count_hoy').innerHTML = `HOY<br>${Math.floor((actual+1) * 1.4)}`;
+  const { data: todos } = await _supabase.from('vistas_diarias').select('conteo_real');
+  const mes = todos.reduce((a, b) => a + b.conteo_real, 0);
+  document.getElementById('count_mes').innerHTML = `MES<br>${Math.floor(mes * 1.4)}`;
+}
+
+// [MARCADOR-ADMIN] RECONSTRUCCIÓN DE DIALES 3D
+async function cargarDiales() {
+  const root = document.getElementById('dials-root');
+  const { data: catData } = await _supabase.from('categorias').select('*').order('orden', {ascending: true});
+  
+  categoriasConfig.forEach((catName, dIdx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'dial-wrapper';
+    wrap.innerHTML = `<div class="dial-label">${catName}</div><div class="scene"><div class="carousel" id="car-${dIdx}"></div></div>`;
+    root.appendChild(wrap);
+    const car = wrap.querySelector(`#car-${dIdx}`);
+    const subs = catData.filter(c => c.grupo === catName);
+    
+    subs.forEach((s, iIdx) => {
+      const item = document.createElement('div');
+      item.className = 'carousel__item';
+      item.id = `it-${dIdx}-${iIdx}`;
+      item.innerHTML = `<img src="${s.imagen_url}" class="item-img"><div class="item-text">${s.nombre}</div>`;
+      item.onclick = () => abrirMapa(s.nombre);
+      car.appendChild(item);
+    });
+    setupCarousel(dIdx, subs.length);
+    updateRot(dIdx, 0, subs.length);
+  });
+}
+
+// [MARCADOR-ADMIN] LÓGICA RADIAL INTELIGENTE
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+async function buscarCerca(tipo, radio) {
+  markersLayer.clearLayers();
+  const { data } = await _supabase.from('Comercios').select('*').eq('Tipo', tipo).eq('Pago_confirmado', true);
+  if(!data) return;
+  const filtrados = data.filter(c => getDistance(userCoords.lat, userCoords.lon, c.Latitud, c.Longitud) <= radio);
+  
+  if(filtrados.length >= 1) {
+    filtrados.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(`<b>${c.Nombre}</b><br>${c.Horario}`));
+    map.fitBounds(filtrados.map(c => [c.Latitud, c.Longitud]));
+  } else if(radio < 1.5) {
+    const proxRadio = radio === 0.3 ? 0.8 : 1.5;
+    buscarCerca(tipo, proxRadio);
+  } else {
+    if(confirm("No hay comercios a 1.5km. ¿Ver todos en la zona?")) {
+      data.forEach(c => L.marker([c.Latitud, c.Longitud]).addTo(markersLayer).bindPopup(c.Nombre));
+    }
+  }
+}
+
+// --- SISTEMA DE VALIDACIÓN EN TIEMPO REAL (NUEVO) ---
+function initValidacionesFormulario() {
+  const wsInput = document.getElementById('reg-ws');
+  const emailInput = document.getElementById('reg-email');
+  const fotosInput = document.getElementById('reg-fotos');
+  
+  wsInput.addEventListener('blur', () => {
+    const v = wsInput.value.trim();
+    if(v && !/^\d{10,12}$/.test(v)) {
+      alert("El número debe tener entre 10 y 12 dígitos (Ej: 584120000000).");
+      wsInput.value = ''; 
+    }
+    checkFormValidity();
+  });
+
+  emailInput.addEventListener('blur', () => {
+    const v = emailInput.value.trim();
+    if(v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+      alert("El correo ingresado no es válido.");
+      emailInput.value = '';
+    }
+    checkFormValidity();
+  });
+
+  fotosInput.addEventListener('change', () => {
+    const files = fotosInput.files;
+    if(files.length > 0) {
+      if(files.length < 2 || files.length > 3) {
+        alert("Debes seleccionar 2 o 3 fotos exactamente.");
+        fotosInput.value = ''; 
+        checkFormValidity();
+        return;
+      }
+      for(let i=0; i<files.length; i++) {
+        if(files[i].size > 3145728) { 
+          alert(`La foto #${i+1} pesa más de 3MB. Por favor elige imágenes más ligeras.`);
+          fotosInput.value = '';
+          checkFormValidity();
+          return;
+        }
+      }
+    }
+    checkFormValidity();
+  });
+
+  document.querySelectorAll('#reg-ui input, #reg-ui select').forEach(el => {
+    el.addEventListener('input', checkFormValidity);
+    el.addEventListener('change', checkFormValidity);
+  });
+}
+
+function checkFormValidity() {
+  const btn = document.getElementById('btn-activar');
   const nombre = document.getElementById('reg-nombre').value;
   const dial = document.getElementById('reg-dial').value;
+  const sub = document.getElementById('reg-sub').value;
   const tipo = document.getElementById('reg-tipo').value;
   const ws = document.getElementById('reg-ws').value;
   const email = document.getElementById('reg-email').value;
   const horario = document.getElementById('reg-horario').value;
+  const fotos = document.getElementById('reg-fotos').files;
+  const gpsCapturado = typeof regCoords !== 'undefined' && regCoords !== null;
+
+  if(nombre && dial && sub && tipo && ws && email && horario && (fotos.length >= 2 && fotos.length <= 3) && gpsCapturado) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  } else {
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+  }
+}
+
+// [MARCADOR-ADMIN] COMPRESIÓN Y REGISTRO (ACTUALIZADO)
+async function procesarRegistro() {
+  const btn = document.getElementById('btn-activar');
+  btn.innerText = "PROCESANDO..."; 
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+
   const files = document.getElementById('reg-fotos').files;
-
-  // 2. Validaciones Estrictas
-  const resetBtn = (msg) => { alert(msg); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; };
-  
-  if(!nombre || !dial || !tipo || !ws || !email || !horario) return resetBtn("Completa todos los campos de texto.");
-  if(!regCoords) return resetBtn("Debes capturar la ubicación GPS primero.");
-  if(files.length < 2) return resetBtn("Sube mínimo 2 fotos del comercio.");
-  if(!/^\d{10,15}$/.test(ws)) return resetBtn("WhatsApp inválido. Usa solo números (Ej: 584120000000).");
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return resetBtn("El correo no tiene un formato válido.");
-
-  // 3. Compresión y Subida al Storage de Supabase
   let fotosUrls = [];
+
   for (let i = 0; i < files.length; i++) {
     const compressedBlob = await compressImage(files[i]);
-    
-    // Validar peso máximo de seguridad post-compresión (3MB = 3 * 1024 * 1024 bytes)
-    if (compressedBlob.size > 3145728) return resetBtn(`La foto ${i+1} sigue siendo muy pesada. Usa otra.`);
-
-    // Nombre único para no sobreescribir en el bucket
     const fileName = `${Date.now()}_${i}.jpg`;
     
-    // Subir a Supabase
-    const { data, error } = await _supabase.storage
-      .from('imagenes_comercios')
-      .upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
+    const { error } = await _supabase.storage.from('imagenes_comercios').upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
+    if (error) { 
+      alert("Error al subir fotos. Reintenta."); 
+      btn.innerText = "ACTIVAR Y PAGAR"; 
+      btn.disabled = false; 
+      btn.style.opacity = '1'; 
+      return; 
+    }
 
-    if (error) return resetBtn("Error al subir las fotos al servidor. Intenta de nuevo.");
-
-    // Obtener la URL pública y guardarla
     const { data: urlData } = _supabase.storage.from('imagenes_comercios').getPublicUrl(fileName);
     fotosUrls.push(urlData.publicUrl);
   }
 
-  // 4. Armar Payload con Formateo (MAYÚSCULAS Y SIN ACENTOS)
   const payload = {
-    Nombre: formatText(nombre),
-    Dial: formatText(dial),
-    Tipo: formatText(tipo),
-    WhatsApp: ws.trim(), // El teléfono no se pasa a mayúsculas, solo se le quitan espacios
-    Latitud: regCoords.lat,
+    Nombre: formatText(document.getElementById('reg-nombre').value),
+    Dial: formatText(document.getElementById('reg-dial').value),
+    Tipo: formatText(document.getElementById('reg-tipo').value),
+    WhatsApp: document.getElementById('reg-ws').value.trim(),
+    Latitud: regCoords.lat, 
     Longitud: regCoords.lon,
-    Email_propietario: formatText(email),
-    Horario: formatText(horario),
-    Fotos_urls: fotosUrls, // Array de enlaces web
+    Email_propietario: formatText(document.getElementById('reg-email').value),
+    Horario: formatText(document.getElementById('reg-horario').value),
+    Fotos_urls: fotosUrls,
     Pago_confirmado: false
   };
 
-  // 5. Insertar en la Base de Datos
   const { error } = await _supabase.from('Comercios').insert(payload);
   
   if(!error) {
-    window.location.href = `https://wa.me/584247573426?text=Hola, activaré mi comercio: ${payload.Nombre}`;
+    // Limpieza de formulario en segundo plano
+    document.querySelectorAll('#reg-ui input').forEach(el => el.value = '');
+    document.getElementById('reg-sub').innerHTML = '<select disabled></select>';
+    document.getElementById('reg-tipo').innerHTML = '<select disabled></select>';
+    document.getElementById('gps-status').style.display = 'none';
+    regCoords = null; 
+    btn.innerText = "ACTIVAR Y PAGAR"; 
+    
+    irA('main-ui'); 
+    window.location.href = `https://wa.me/584247573426?text=Hola, acabo de registrar mi comercio: ${payload.Nombre}. Solicito activacion.`;
   } else {
-    resetBtn("Error de base de datos. Revisa la conexión.");
+    alert("Error de red. Intenta nuevamente.");
+    btn.innerText = "ACTIVAR Y PAGAR"; 
+    btn.disabled = false; 
+    btn.style.opacity = '1';
   }
 }
 
-    // --- FUNCIONES DE SOPORTE ---
-    function setupCarousel(dIdx, total) {
-        const car = document.getElementById(`car-${dIdx}`);
-        let sX = 0, moved = false;
-        car.ontouchstart = e => { sX = e.touches[0].pageX; car.style.transition = 'none'; };
-        car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.1; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
-        car.ontouchend = () => { if(!moved) return; rotations[dIdx] = Math.round(rotations[dIdx]/40)*40; car.style.transition = 'transform 0.5s'; updateRot(dIdx, rotations[dIdx], total); };
-    }
+// --- FUNCIONES DE SOPORTE ---
+function setupCarousel(dIdx, total) {
+  const car = document.getElementById(`car-${dIdx}`);
+  let sX = 0, moved = false;
+  car.ontouchstart = e => { sX = e.touches[0].pageX; car.style.transition = 'none'; };
+  car.ontouchmove = e => { let d = (e.touches[0].pageX - sX)*0.5; updateRot(dIdx, rotations[dIdx] + d, total); moved = true; };
+  car.ontouchend = () => { if(!moved) return; rotations[dIdx] = Math.round(rotations[dIdx]/40)*40; car.style.transition = 'transform 0.5s'; updateRot(dIdx, rotations[dIdx], total); };
+}
 
-    function updateRot(dIdx, val, total) {
-        rotations[dIdx] = val;
-        const car = document.getElementById(`car-${dIdx}`);
-        if(car) car.style.transform = `rotateY(${val}deg)`;
-        for(let i=0; i<total; i++) {
-            const el = document.getElementById(`it-${dIdx}-${i}`);
-            if(el) el.style.transform = `rotateY(${i*40}deg) translateZ(190px) rotateY(${- (i*40) - val}deg)`;
-        }
-    }
+function updateRot(dIdx, val, total) {
+  rotations[dIdx] = val;
+  const car = document.getElementById(`car-${dIdx}`);
+  if(car) car.style.transform = `rotateY(${val}deg)`;
+  for(let i=0; i<total; i++) {
+    const el = document.getElementById(`it-${dIdx}-${i}`);
+    if(el) el.style.transform = `rotateY(${i*40}deg) translateZ(190px) rotateY(${- (i*40) - val}deg)`;
+  }
+}
 
-    async function abrirMapa(subNombre) {
-        irA('map-view'); document.getElementById('map-title').innerText = subNombre;
-        const { data } = await _supabase.from('categorias').select('busqueda').eq('nombre', subNombre).single();
-        const container = document.getElementById('filter-container');
-        container.innerHTML = '';
-        data.busqueda.split(',').forEach(tipo => {
-            const b = document.createElement('button'); b.className = 'globito'; b.innerText = tipo.trim();
-            b.onclick = () => buscarCerca(tipo.trim(), 0.3);
-            container.appendChild(b);
-        });
-    }
+async function abrirMapa(subNombre) {
+  irA('map-view'); document.getElementById('map-title').innerText = subNombre;
+  const { data } = await _supabase.from('categorias').select('busqueda').eq('nombre', subNombre).single();
+  const container = document.getElementById('filter-container');
+  container.innerHTML = '';
+  data.busqueda.split(',').forEach(tipo => {
+    const b = document.createElement('button'); b.className = 'globito'; b.innerText = tipo.trim();
+    b.onclick = () => buscarCerca(tipo.trim(), 0.3);
+    container.appendChild(b);
+  });
+}
 
-    function irA(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='map-view') setTimeout(()=>map.invalidateSize(), 300); }
-    function mostrarRegistro() { const w = document.getElementById('welcome-screen'); w.style.display='flex'; setTimeout(() => { w.classList.add('fade-out'); irA('reg-ui'); }, 1600); }
-    function capturarGPS() { navigator.geolocation.getCurrentPosition(p => { regCoords = {lat: p.coords.latitude, lon: p.coords.longitude}; document.getElementById('gps-status').style.display='block'; }); }
-    
-    function popularSelectCategorias() { const s = document.getElementById('reg-dial'); categoriasConfig.forEach(c => s.innerHTML += `<option value="${c}">${c}</option>`); }
-    async function actualizarSubcategorias() {
-        const cat = document.getElementById('reg-dial').value;
-        const sub = document.getElementById('reg-sub'); sub.innerHTML = '<option>Cargando...</option>';
-        const { data } = await _supabase.from('categorias').select('nombre').eq('grupo', cat);
-        sub.innerHTML = '<option value="">Selecciona...</option>';
-        data.forEach(d => sub.innerHTML += `<option value="${d.nombre}">${d.nombre}</option>`);
-        sub.disabled = false;
-    }
-    async function actualizarSubdivisiones() {
-        const subNombre = document.getElementById('reg-sub').value;
-        const tipo = document.getElementById('reg-tipo');
-        const { data } = await _supabase.from('categorias').select('busqueda').eq('nombre', subNombre).single();
-        tipo.innerHTML = '<option value="">Selecciona...</option>';
-        data.busqueda.split(',').forEach(t => tipo.innerHTML += `<option value="${t.trim()}">${t.trim()}</option>`);
-        tipo.disabled = false;
-    }
+function irA(id) { 
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+  document.getElementById(id).classList.add('active');
+  if(id==='map-view') setTimeout(()=>map.invalidateSize(), 300); 
+}
 
-    window.onload = () => {
-        initContador();
-        cargarDiales();
-        popularSelectCategorias();
-        map = L.map('map').setView([7.767, -72.230], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        markersLayer = L.layerGroup().addTo(map);
-        navigator.geolocation.getCurrentPosition(p => {
-            userCoords = {lat: p.coords.latitude, lon: p.coords.longitude};
-            L.circle([userCoords.lat, userCoords.lon], {radius: 40, color: 'blue'}).addTo(map);
-        });
-        setTimeout(() => document.getElementById('splash-screen').classList.add('fade-out'), 300);
-    };
+function mostrarRegistro() { 
+  const w = document.getElementById('welcome-screen');
+  w.style.display='flex'; setTimeout(() => { w.classList.add('fade-out'); irA('reg-ui'); }, 1600); 
+}
+
+function capturarGPS() { 
+  navigator.geolocation.getCurrentPosition(p => { 
+    regCoords = {lat: p.coords.latitude, lon: p.coords.longitude};
+    document.getElementById('gps-status').style.display='block'; 
+    checkFormValidity();
+  }); 
+}
+
+function popularSelectCategorias() { 
+  const s = document.getElementById('reg-dial');
+  categoriasConfig.forEach(c => s.innerHTML += `<option value="${c}">${c}</option>`); 
+}
+
+// SELECTORES EN CASCADA (ACTUALIZADOS)
+async function actualizarSubcategorias() {
+  const cat = document.getElementById('reg-dial').value;
+  const sub = document.getElementById('reg-sub');
+  const tipo = document.getElementById('reg-tipo');
+  
+  sub.innerHTML = '<option value="">Cargando...</option>';
+  tipo.innerHTML = '<option value="">Selecciona...</option>';
+  tipo.disabled = true;
+
+  if(!cat) { sub.disabled = true; checkFormValidity(); return; }
+
+  const { data } = await _supabase.from('categorias').select('nombre').eq('grupo', cat);
+  sub.innerHTML = '<option value="">Selecciona...</option>';
+  data.forEach(d => sub.innerHTML += `<option value="${d.nombre}">${d.nombre}</option>`);
+  sub.disabled = false;
+  checkFormValidity();
+}
+
+async function actualizarSubdivisiones() {
+  const subNombre = document.getElementById('reg-sub').value;
+  const tipo = document.getElementById('reg-tipo');
+  
+  tipo.innerHTML = '<option value="">Cargando...</option>';
+  
+  if(!subNombre) { tipo.disabled = true; checkFormValidity(); return; }
+
+  const { data } = await _supabase.from('categorias').select('busqueda').eq('nombre', subNombre).single();
+  tipo.innerHTML = '<option value="">Selecciona...</option>';
+  if(data && data.busqueda) {
+    data.busqueda.split(',').forEach(t => tipo.innerHTML += `<option value="${t.trim()}">${t.trim()}</option>`);
+    tipo.disabled = false;
+  }
+  checkFormValidity();
+}
+
+// ARRANQUE DE LA APP
+window.onload = () => {
+  initValidacionesFormulario();
+  checkFormValidity();
+  initContador();
+  cargarDiales();
+  popularSelectCategorias();
+  
+  map = L.map('map').setView([7.767, -72.230], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+  
+  navigator.geolocation.getCurrentPosition(p => {
+    userCoords = {lat: p.coords.latitude, lon: p.coords.longitude};
+    L.circle([userCoords.lat, userCoords.lon], {radius: 40, color: 'blue'}).addTo(map);
+  });
+  
+  setTimeout(() => document.getElementById('splash-screen').classList.add('fade-out'), 1200);
+};
 </script>
 </body>
 </html>
