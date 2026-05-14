@@ -235,27 +235,101 @@
             }
         }
     }
+// --- UTILIDADES DE LIMPIEZA Y COMPRESIÓN ---
+const formatText = (text) => {
+  return text ? text.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
+};
 
-    // [MARCADOR-ADMIN] COMPRESIÓN Y REGISTRO
-    async function procesarRegistro() {
-        const btn = document.getElementById('btn-activar');
-        btn.innerText = "PROCESANDO..."; btn.disabled = true;
+const compressImage = (file) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800; // Resolución optimizada para móviles
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // Convierte a JPG con 70% de calidad
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7);
+      };
+    };
+  });
+};
+    // [MARCADOR-ADMIN] COMPRESIÓN Y REGISTRO (VERSIÓN 2.0)
+async function procesarRegistro() {
+  const btn = document.getElementById('btn-activar');
+  btn.innerText = "PROCESANDO..."; btn.disabled = true;
 
-        const payload = {
-            Nombre: document.getElementById('reg-nombre').value,
-            Dial: document.getElementById('reg-dial').value,
-            Tipo: document.getElementById('reg-tipo').value,
-            WhatsApp: document.getElementById('reg-ws').value,
-            Latitud: regCoords.lat, Longitud: regCoords.lon,
-            Email_propietario: document.getElementById('reg-email').value,
-            Horario: document.getElementById('reg-horario').value,
-            Pago_confirmado: false
-        };
+  // 1. Extraer Valores
+  const nombre = document.getElementById('reg-nombre').value;
+  const dial = document.getElementById('reg-dial').value;
+  const tipo = document.getElementById('reg-tipo').value;
+  const ws = document.getElementById('reg-ws').value;
+  const email = document.getElementById('reg-email').value;
+  const horario = document.getElementById('reg-horario').value;
+  const files = document.getElementById('reg-fotos').files;
 
-        const { error } = await _supabase.from('Comercios').insert(payload);
-        if(!error) window.location.href = `https://wa.me/584247573426?text=Hola, activaré mi comercio: ${payload.Nombre}`;
-        else { alert("Error al guardar. Revisa los datos."); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; }
-    }
+  // 2. Validaciones Estrictas
+  const resetBtn = (msg) => { alert(msg); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; };
+  
+  if(!nombre || !dial || !tipo || !ws || !email || !horario) return resetBtn("Completa todos los campos de texto.");
+  if(!regCoords) return resetBtn("Debes capturar la ubicación GPS primero.");
+  if(files.length < 2) return resetBtn("Sube mínimo 2 fotos del comercio.");
+  if(!/^\d{10,15}$/.test(ws)) return resetBtn("WhatsApp inválido. Usa solo números (Ej: 584120000000).");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return resetBtn("El correo no tiene un formato válido.");
+
+  // 3. Compresión y Subida al Storage de Supabase
+  let fotosUrls = [];
+  for (let i = 0; i < files.length; i++) {
+    const compressedBlob = await compressImage(files[i]);
+    
+    // Validar peso máximo de seguridad post-compresión (3MB = 3 * 1024 * 1024 bytes)
+    if (compressedBlob.size > 3145728) return resetBtn(`La foto ${i+1} sigue siendo muy pesada. Usa otra.`);
+
+    // Nombre único para no sobreescribir en el bucket
+    const fileName = `${Date.now()}_${i}.jpg`;
+    
+    // Subir a Supabase
+    const { data, error } = await _supabase.storage
+      .from('imagenes_comercios')
+      .upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
+
+    if (error) return resetBtn("Error al subir las fotos al servidor. Intenta de nuevo.");
+
+    // Obtener la URL pública y guardarla
+    const { data: urlData } = _supabase.storage.from('imagenes_comercios').getPublicUrl(fileName);
+    fotosUrls.push(urlData.publicUrl);
+  }
+
+  // 4. Armar Payload con Formateo (MAYÚSCULAS Y SIN ACENTOS)
+  const payload = {
+    Nombre: formatText(nombre),
+    Dial: formatText(dial),
+    Tipo: formatText(tipo),
+    WhatsApp: ws.trim(), // El teléfono no se pasa a mayúsculas, solo se le quitan espacios
+    Latitud: regCoords.lat,
+    Longitud: regCoords.lon,
+    Email_propietario: formatText(email),
+    Horario: formatText(horario),
+    Fotos_urls: fotosUrls, // Array de enlaces web
+    Pago_confirmado: false
+  };
+
+  // 5. Insertar en la Base de Datos
+  const { error } = await _supabase.from('Comercios').insert(payload);
+  
+  if(!error) {
+    window.location.href = `https://wa.me/584247573426?text=Hola, activaré mi comercio: ${payload.Nombre}`;
+  } else {
+    resetBtn("Error de base de datos. Revisa la conexión.");
+  }
+}
 
     // --- FUNCIONES DE SOPORTE ---
     function setupCarousel(dIdx, total) {
