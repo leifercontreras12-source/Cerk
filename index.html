@@ -415,16 +415,21 @@ function checkFormValidity() {
 }
 
 // [MARCADOR-ADMIN] COMPRESIÓN Y REGISTRO
+// [MARCADOR-ADMIN] COMPRESIÓN Y REGISTRO
 async function procesarRegistro() {
   const btn = document.getElementById('btn-activar');
   btn.innerText = "PROCESANDO..."; btn.disabled = true; btn.style.opacity = '0.5';
+
+  const nombreComercio = formatText(document.getElementById('reg-nombre').value).replace(/\s+/g, '_');
+  const whatsappComercio = document.getElementById('reg-ws').value.trim();
+  const folderPath = `${nombreComercio}-${whatsappComercio}`;
 
   const files = document.getElementById('reg-fotos').files;
   let fotosUrls = [];
 
   for (let i = 0; i < files.length; i++) {
     const compressedBlob = await compressImage(files[i]);
-    const fileName = `${Date.now()}_${i}.jpg`;
+    const fileName = `${folderPath}/foto_${Date.now()}_${i}.jpg`;
     
     const { error } = await _supabase.storage.from('imagenes_comercios').upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
     if (error) { alert("Error al subir fotos. Reintenta."); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1'; return; }
