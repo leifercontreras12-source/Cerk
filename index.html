@@ -6,15 +6,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#1a3c63">
 <title>+CERK</title>
+
+<!-- Leaflet CSS & JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Leaflet Routing Machine CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+<!-- Supabase JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 :root {
   --navy-deep: #173b66;
   --accent-blue: #00b4d8;
   --white: #ffffff;
-  --glass: rgba(255, 255, 255, 0.85);
 }
 html, body { height: 100%; margin: 0; padding: 0; }
 body {
@@ -40,24 +48,26 @@ body {
 }
 .fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
 
-/* Estética Original del Encabezado */
+/* Transparencia Total en Encabezado Home */
 .brand {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
+  background: transparent;
   width: 100%; height: 75px;
   display: flex; justify-content: center; align-items: center;
-  position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  position: sticky; top: 0; z-index: 1000;
 }
-.brand-text { font-family: "Georgia", serif; font-style: italic; font-size: 2.3rem; letter-spacing: -1px; }
+.brand-text { 
+  font-family: "Georgia", serif; font-style: italic; font-size: 2.3rem; letter-spacing: -1px; 
+  text-shadow: 0 2px 10px rgba(255,255,255,0.8);
+}
 .plus-sign { color: var(--accent-blue); font-weight: 900; text-shadow: 0 0 1px var(--accent-blue); }
-.cerk-text { color: #7a8a99; }
+.cerk-text { color: #7a8a99; font-weight: 800;}
 
-/* Contadores estilo Píldora Premium */
+/* Contadores estilo Píldora Premium (Flotantes transparentes) */
 .stat-box {
   position: absolute; font-size: 0.65rem; color: var(--navy-deep); font-weight: 800;
-  text-align: center; background: rgba(23, 59, 102, 0.08);
+  text-align: center; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(2px);
   padding: 6px 12px; border-radius: 20px; line-height: 1.2;
-  font-family: 'Georgia', serif; font-style: italic;
+  font-family: 'Georgia', serif; font-style: italic; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 #count_hoy { left: 15px; }
 #count_mes { right: 15px; }
@@ -66,8 +76,9 @@ body {
 .dial-container { width: 100%; padding: 15px 0 5px 0; z-index: 2; position: relative;}
 .dial-wrapper { width: 100%; height: 135px; margin-bottom: 5px; }
 .dial-label {
-  font-family: 'Georgia', serif; font-size: 0.85rem; font-weight: 800; text-transform: uppercase;
+  font-family: 'Georgia', serif; font-size: 0.85rem; font-weight: 900; text-transform: uppercase;
   color: var(--navy-deep); text-align: center; margin-bottom: 6px; letter-spacing: 2px;
+  text-shadow: 0 2px 8px rgba(255,255,255,0.9);
 }
 .scene { width: 100%; height: 100px; perspective: 1000px; display: flex; justify-content: center; }
 .carousel {
@@ -76,7 +87,7 @@ body {
 .carousel__item {
   position: absolute; width: 130px; height: 85px; background: var(--white);
   border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08); overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15); overflow: hidden;
   display: flex; flex-direction: column; align-items: center;
 }
 .item-img { width: 100%; height: 68%; object-fit: cover; pointer-events: none;}
@@ -104,10 +115,10 @@ body {
 }
 .btn-navy:active { transform: scale(0.96); }
 
-/* Formulario Estilo Premium (Glassmorphism) */
+/* Formulario Estilo Premium (Fondo Blanco Ligero) */
 .form-card {
-  width: 90%; max-width: 420px; background: var(--glass);
-  backdrop-filter: blur(15px); border-radius: 25px; border: 1px solid rgba(255,255,255,0.5);
+  width: 90%; max-width: 420px; background: rgba(255, 255, 255, 0.95);
+  border-radius: 25px; border: 1px solid rgba(255,255,255,0.5);
   margin: 20px 0; padding: 35px 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.1);
 }
 .form-group { margin-bottom: 20px; }
@@ -127,27 +138,31 @@ body {
 }
 .day-btn.active { background: var(--navy-deep); color: white; }
 
-/* Mapa, Filtros y Pop-up Nativo Leaflet */
+/* Transparencia Total en Componentes del Mapa */
 .map-header { 
-  background: rgba(23, 59, 102, 0.85); backdrop-filter: blur(10px); color: white; padding: 15px 20px; display: flex;
-  justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  z-index: 1000; position:relative;
+  background: transparent; color: var(--navy-deep); padding: 15px 20px; display: flex;
+  justify-content: space-between; align-items: center; z-index: 1000; position:relative; pointer-events: none;
 }
+.map-header * { pointer-events: auto; }
+#map-title { text-shadow: 0 2px 10px rgba(255,255,255,0.9); background: rgba(255,255,255,0.6); padding: 5px 15px; border-radius: 20px;}
 .filter-bar { 
-  width: 100%; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); padding: 12px 15px; display: flex; gap: 10px;
-  overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05); box-sizing: border-box;
+  width: 100%; background: transparent; padding: 12px 15px; display: flex; gap: 10px;
+  overflow-x: auto; box-sizing: border-box; position: relative; z-index: 1000; pointer-events: none;
 }
 .filter-bar::-webkit-scrollbar { display: none; }
 .globito {
-  background: rgba(0, 180, 216, 0.9); backdrop-filter: blur(5px); color: white; padding: 10px 20px;
+  background: var(--accent-blue); color: white; padding: 10px 20px; pointer-events: auto;
   border-radius: 30px; font-size: 0.8rem; font-weight: bold; border: none; white-space: nowrap;
-  box-shadow: 0 4px 10px rgba(0,180,216,0.2);
+  box-shadow: 0 4px 10px rgba(0,180,216,0.3);
 }
-#map { width: 100%; flex: 1; min-height: 400px; z-index: 1; }
+#map { width: 100%; flex: 1; min-height: 400px; z-index: 1; position: absolute; top:0; left:0; height: 100%;}
 
 .leaflet-popup-content-wrapper { border-radius: 20px !important; box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important; padding: 5px !important;}
 .leaflet-popup-content { width: 280px !important; margin: 15px !important; }
 .leaflet-container a.leaflet-popup-close-button { top: 10px !important; right: 10px !important; color: #a0aec0 !important; font-weight: bold; }
+
+/* Ocultar panel de instrucciones de Leaflet Routing Machine para mantener UI limpia */
+.leaflet-routing-container { display: none !important; }
 
 /* Modal Calificaciones */
 #rating-modal {
@@ -159,7 +174,7 @@ body {
   background: white; padding: 30px; border-radius: 25px; text-align: center; width: 85%; max-width: 350px; position: relative;
 }
 .close-rating { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; font-weight: bold; color: #a0aec0; }
-.star { font-size: 2.5rem; color: #e2e8f0; margin: 0 5px; transition: 0.2s; }
+.star { font-size: 2.5rem; color: #e2e8f0; margin: 0 5px; transition: 0.2s; cursor: pointer;}
 .star.selected { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
 </style>
 </head>
@@ -181,9 +196,9 @@ body {
   <div id="dials-root" class="dial-container"></div>
   
   <div class="register-section">
-    <p class="register-text">¿Deseas formar parte de nuestro equipo?</p>
+    <p class="register-text">¿Quieres formar parte de nuestro equipo?</p>
     <button class="btn-navy" style="width: 85%;" onclick="mostrarRegistro()">REGÍSTRATE</button>
-    <p class="legal-footer">Al navegar en Cerk, aceptas nuestros Términos de Uso</p>
+    <p class="legal-footer">Al navegar en +Cerk, aceptas nuestros Términos de Uso</p>
   </div>
 </div>
 
@@ -243,13 +258,13 @@ body {
   </div>
 </div>
 
-<div id="map-view" class="screen">
+<div id="map-view" class="screen" style="position: relative; overflow: hidden;">
+  <div id="map"></div>
   <div class="map-header">
     <span id="map-title" style="font-weight: 900; letter-spacing: 1px; font-size: 1.1rem;">MAPA</span>
-    <button onclick="irA('main-ui')" style="background:var(--accent-blue); border:none; color:white; padding:10px 18px; border-radius:15px; font-weight:bold; box-shadow: 0 4px 10px rgba(0,180,216,0.3);">CERRAR</button>
+    <button onclick="irA('main-ui')" style="background:var(--accent-blue); border:none; color:white; padding:10px 18px; border-radius:15px; font-weight:bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">CERRAR</button>
   </div>
   <div id="filter-container" class="filter-bar"></div>
-  <div id="map"></div>
 </div>
 
 <!-- Modal Calificaciones -->
@@ -276,8 +291,9 @@ const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let map, markersLayer, userCoords, regCoords;
 let rotations = new Array(10).fill(0);
 let radiusCircle = null;
-let routingLine = null;
+let routingControl = null; // Instancia OSRM Peatonal
 let comercioPendienteCalificar = null;
+let ratingActivado = false; // Flag para controlar aparición al retorno
 
 const categoriasConfig = ["GASTRONOMIA", "SALUD Y BIENESTAR", "ESTILO Y BELLEZA", "HOGAR Y CONSTRUCCION", "AUTOMOTRIZ", "DIESEL E INDUSTRIA", "INSUMOS Y DISTRIBUCION", "TECNOLOGIA Y COMUNICACION", "SERVICIOS Y LOGISTICA", "EXCLUSIVO"];
 
@@ -323,7 +339,6 @@ function calcularEstadoHorario(horarioStr) {
     const currentMins = now.getMinutes();
     const currentTime = currentHour + currentMins/60;
 
-    // EVALUAR NUEVO FORMATO: LUN,MAR|08:00-12:00/14:00-18:00
     if(horarioStr.includes("|")) {
       const dayIndex = now.getDay();
       const daysMap = ["DOM","LUN","MAR","MIE","JUE","VIE","SAB"];
@@ -356,13 +371,12 @@ function calcularEstadoHorario(horarioStr) {
       if(openStatus) {
         if(minsToClose <= 10) return `<span style='color:#e63946; font-weight:bold;'>🔴 ¡Corre! Están cerrando 🏃🏻</span>`;
         if(minsToClose <= 30) return `<span style='color:#f4a261; font-weight:bold;'>🟡 ¡Apúrate que sí llegas! 🤩</span>`;
-        return `<span style='color:#25D366; font-weight:bold;'>🟢 Ahora está abierto 😎</span>`;
+        return `<span style='color:#25D366; font-weight:bold;'>🟢 YA está abierto 😎</span>`;
       } else {
         return `<span style='color:#e63946; font-weight:bold;'>🔴 Ya cerraron 🥺</span>`;
       }
     }
 
-    // EVALUAR VIEJO FORMATO: 8:00am - 6:00pm
     const regex = /(\d{1,2})[:.]?(\d{0,2})\s*(AM|PM)?\s*[-A]\s*(\d{1,2})[:.]?(\d{0,2})\s*(AM|PM)?/i;
     const match = horarioStr.match(regex);
     if(!match) return `<span style='color:#7a8a99; font-weight:bold;'>🕒 ${horarioStr}</span>`;
@@ -386,8 +400,8 @@ function calcularEstadoHorario(horarioStr) {
     if(isAbierto) {
       let minsLeft = (closeTime - currentTime) * 60;
       if(closeTime < openTime && currentTime >= openTime) minsLeft = (closeTime + 24 - currentTime) * 60;
-      if(minsLeft <= 10) return `<span style='color:#e63946; font-weight:bold;'>🔴 ¡Corre! Están cerrando 🏃🏻</span>`;
-      if(minsLeft <= 30) return `<span style='color:#f4a261; font-weight:bold;'>🟡 ¡Apúrate que sí llegas! 🤩</span>`;
+      if(minsLeft <= 10) return `<span style='color:#e63946; font-weight:bold;'>🔴 ¡Corre! Están cerrando!! 🏃🏻</span>`;
+      if(minsLeft <= 30) return `<span style='color:#f4a261; font-weight:bold;'>🟡 ¡Apúrate, que sí llegas! 🤩</span>`;
       return `<span style='color:#25D366; font-weight:bold;'>🟢 Ahora está abierto 😎</span>`;
     }
     return `<span style='color:#e63946; font-weight:bold;'>🔴 Ya cerraron 🥺</span>`;
@@ -397,18 +411,37 @@ function calcularEstadoHorario(horarioStr) {
   }
 }
 
-// --- Trazado Geométrico de Ruta ---
+// --- Trazado Inteligente de Ruta (Leaflet Routing Machine + OSRM Peatonal) ---
 function trazarRuta(lat, lon) {
   if(!userCoords) { alert("GPS no activado. Intenta de nuevo."); return; }
-  if(routingLine) map.removeLayer(routingLine);
-  routingLine = L.polyline([[userCoords.lat, userCoords.lon], [lat, lon]], {
-    color: '#00b4d8', weight: 5, opacity: 0.8, dashArray: '10, 10'
+  
+  if(routingControl) {
+    map.removeControl(routingControl);
+  }
+  
+  routingControl = L.Routing.control({
+    waypoints: [
+      L.latLng(userCoords.lat, userCoords.lon),
+      L.latLng(lat, lon)
+    ],
+    router: L.Routing.osrmv1({
+      language: 'es',
+      profile: 'foot' // Enrutamiento real peatonal por calles de OSM
+    }),
+    lineOptions: {
+      styles: [{color: '#00b4d8', opacity: 0.8, weight: 6, dashArray: '10, 10'}]
+    },
+    show: false, // UI Itinerario apagada
+    addWaypoints: false,
+    routeWhileDragging: false,
+    fitSelectedRoutes: true,
+    createMarker: function() { return null; } // Evita marcadores duplicados
   }).addTo(map);
-  map.fitBounds(routingLine.getBounds(), {padding: [50, 50]});
 }
 
 function prepararCalificacion(nombre) {
   comercioPendienteCalificar = nombre;
+  ratingActivado = false; // Se activará cuando la app pase a segundo plano (al abrir WhatsApp)
 }
 
 // --- GENERADOR DEL POPUP PREMIUM ---
@@ -425,12 +458,12 @@ function generarPopup(c) {
       <h3 style="margin: 0 0 8px 0; color: var(--navy-deep); font-size:1.15rem; text-transform:uppercase; letter-spacing: -0.5px;">${c.Nombre}</h3>
       ${fotosHTML}
       <div style="font-size: 0.85rem; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px;">${estado}</div>
-      <a href="https://wa.me/${c.WhatsApp}?text=Hola, acabo de ver su comercio en CERK." target="_blank" onclick="prepararCalificacion('${c.Nombre}')"
+      <a href="https://wa.me/${c.WhatsApp}?text=Hola,%20acabo%20de%20ver%20su%20comercio%20en%20+CERK." target="_blank" onclick="prepararCalificacion('${c.Nombre}')"
          style="display:block; text-align:center; background:#25D366; color:white; padding:12px; border-radius:12px; text-decoration:none; font-weight:bold; box-shadow:0 4px 10px rgba(37,211,102,0.3); font-size:0.9rem;">
         Contactar por WhatsApp
       </a>
       <button onclick="trazarRuta(${c.Latitud}, ${c.Longitud})" style="display:block; width:100%; margin-top:8px; text-align:center; background:var(--navy-deep); color:white; padding:10px; border-radius:12px; border:none; font-weight:bold; font-size:0.85rem; cursor:pointer;">
-        ¿Cómo llegar? 📍
+        Llevame alli! 📍
       </button>
     </div>
   `;
@@ -449,7 +482,7 @@ async function initContador() {
   document.getElementById('count_mes').innerHTML = `VIEW M<br>${Math.floor(mes * 1.4)}`;
 }
 
-// --- RECONSTRUCCIÓN DE DIALES 3D (CON FÍSICAS DE FRICCIÓN) ---
+// --- RECONSTRUCCIÓN DE DIALES 3D (CON FÍSICA MATEMÁTICA 0.85) ---
 async function cargarDiales() {
   const root = document.getElementById('dials-root');
   const { data: catData } = await _supabase.from('categorias').select('*').order('orden', {ascending: true});
@@ -475,7 +508,6 @@ async function cargarDiales() {
   });
 }
 
-// Físicas CSS3D avanzadas con amortiguación
 function setupCarousel(dIdx, total) {
   const car = document.getElementById(`car-${dIdx}`); 
   let sX = 0, moved = false, isTouching = false;
@@ -506,11 +538,13 @@ function setupCarousel(dIdx, total) {
     let v = velocity * 15;
 
     const animate = () => {
-      if(Math.abs(v) > 0.1) {
-        currentRot += v; v *= 0.92; // Fricción
+      if(Math.abs(v) > 0.5) { // Frenado progresivo
+        currentRot += v; 
+        v *= 0.85; // Factor de fricción matemático solicitado
         updateRot(dIdx, currentRot, total);
         rafId = requestAnimationFrame(animate);
       } else {
+        // Al frenar, se ancla perfectamente en la ventana más cercana (múltiplos de 40 grados)
         rotations[dIdx] = Math.round(currentRot/40)*40;
         car.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
         updateRot(dIdx, rotations[dIdx], total);
@@ -547,7 +581,7 @@ async function buscarCerca(tipo, radio) {
   const { data } = await _supabase.from('Comercios').select('*').eq('Tipo', tipo).eq('Pago_confirmado', true);
   if(!data || data.length === 0) {
     if(radiusCircle) map.removeLayer(radiusCircle);
-    alert(`Aún no hay comercios del rubro "${tipo}" registrados en Cerk.`);
+    alert(`Aún no hay comercios del rubro "${tipo}" registrados en +Cerk.`);
     return;
   }
   
@@ -560,7 +594,7 @@ async function buscarCerca(tipo, radio) {
     const proxRadio = radio === 0.3 ? 0.8 : 1.5;
     buscarCerca(tipo, proxRadio);
   } else {
-    if(confirm(`No encontramos "${tipo}" a menos de 1.5km. ¿Deseas ver todos los disponibles a nivel global?`)) {
+    if(confirm(`No encontramos "${tipo}" a menos de 1.5km. ¿Deseas ver todos los disponible s en la zona?`)) {
       if(radiusCircle) map.removeLayer(radiusCircle);
       data.forEach(c => L.marker([c.Latitud, c.Longitud], {icon: cerkIcon}).addTo(markersLayer).bindPopup(generarPopup(c)));
       map.fitBounds(data.map(c => [c.Latitud, c.Longitud]), { padding: [50, 50] });
@@ -576,18 +610,12 @@ function initValidacionesFormulario() {
   const emailInput = document.getElementById('reg-email');
   const fotosInput = document.getElementById('reg-fotos');
 
-  // Lógica Botones de Días
   document.querySelectorAll('.day-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      btn.classList.toggle('active');
-      checkFormValidity();
-    });
+    btn.addEventListener('click', () => { btn.classList.toggle('active'); checkFormValidity(); });
   });
   
-  // Mostrar/Ocultar Horario Partido
   document.getElementById('break-toggle').addEventListener('change', (e) => {
-    document.getElementById('break-times').style.display = e.target.checked ? 'flex' : 'none';
-    checkFormValidity();
+    document.getElementById('break-times').style.display = e.target.checked ? 'flex' : 'none'; checkFormValidity();
   });
 
   wsInput.addEventListener('blur', () => {
@@ -667,7 +695,6 @@ async function procesarRegistro() {
     fotosUrls.push(urlData.publicUrl);
   }
 
-  // Generar Cadena Horario Nuevo Formato
   const daysStr = Array.from(document.querySelectorAll('.day-btn.active')).map(el => el.dataset.day).join(',');
   const tOp1 = document.getElementById('t-open').value;
   const tCl1 = document.getElementById('t-close').value;
@@ -712,7 +739,7 @@ async function procesarRegistro() {
     regCoords = null;
     btn.innerText = "ACTIVAR Y PAGAR";
     irA('main-ui');
-    window.location.href = `https://wa.me/584247573426?text=Hola, acabo de registrar mi comercio: ${payload.Nombre}. Solicito activacion.`;
+    window.location.href = `https://wa.me/584247573426?text=Hola,%20acabo%20de%20registrar%20mi%20comercio:%20${payload.Nombre}.%20Solicito%20activacion.`;
   } else {
     alert("Error de red. Intenta nuevamente."); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1';
   }
@@ -737,7 +764,7 @@ function irA(id) {
   if(id === 'main-ui') {
     if(markersLayer) markersLayer.clearLayers();
     if(radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
-    if(routingLine) { map.removeLayer(routingLine); routingLine = null; }
+    if(routingControl) { map.removeControl(routingControl); routingControl = null; }
     document.getElementById('filter-container').innerHTML = '';
     document.getElementById('map-title').innerText = 'MAPA';
   }
@@ -769,7 +796,7 @@ function capturarGPS() {
     const btnGps = document.getElementById('btn-gps');
     if(btnGps) {
       btnGps.style.background = '#25D366'; btnGps.style.color = 'white'; btnGps.style.border = '2px solid #25D366';
-      btnGps.innerHTML = 'UBICACIÓN CAPTURADA ✓';
+      btnGps.innerHTML = 'UBICACIÓN DEFINIDA ✓';
     }
     checkFormValidity();
   });
@@ -799,16 +826,22 @@ async function actualizarSubdivisiones() {
   checkFormValidity();
 }
 
-// --- CALIFICACIONES Y EVENTOS JS ---
+// --- EVENTOS NATIVOS DE RETORNO A LA APP (CALIFICACIÓN) ---
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && comercioPendienteCalificar) {
-    document.getElementById('rating-modal').style.display = 'flex';
+  if (document.visibilityState === 'hidden') {
+    if (comercioPendienteCalificar) ratingActivado = true;
+  }
+  if (document.visibilityState === 'visible' && comercioPendienteCalificar && ratingActivado) {
+    setTimeout(() => {
+      document.getElementById('rating-modal').style.display = 'flex';
+    }, 500); // Pequeño delay de transición para mostrar el popup al volver a la app
   }
 });
 
 function cerrarModalCalificacion() {
   document.getElementById('rating-modal').style.display = 'none';
   comercioPendienteCalificar = null;
+  ratingActivado = false;
 }
 
 async function enviarCalificacion(estrellas) {
@@ -818,6 +851,7 @@ async function enviarCalificacion(estrellas) {
       await _supabase.from('calificaciones').insert({ estrellas: estrellas });
     } catch(e) {}
     comercioPendienteCalificar = null;
+    ratingActivado = false;
   }
 }
 
@@ -830,7 +864,7 @@ window.onload = () => {
   markersLayer = L.layerGroup().addTo(map);
 
   map.on('popupclose', () => {
-    if(routingLine) { map.removeLayer(routingLine); routingLine = null; }
+    if(routingControl) { map.removeControl(routingControl); routingControl = null; }
   });
 
   navigator.geolocation.getCurrentPosition(p => {
@@ -842,7 +876,7 @@ window.onload = () => {
     const splash = document.getElementById('splash-screen');
     splash.classList.add('fade-out');
     setTimeout(() => splash.style.display = 'none', 500);
-  }, 800); // Tiempos de carga optimizados
+  }, 800); 
 };
 </script>
 </body>
