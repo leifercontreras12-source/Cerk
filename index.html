@@ -523,7 +523,7 @@ function setupCarousel(dIdx, total) {
   car.addEventListener('touchmove', e => {
     if(!isTouching) return;
     const currX = e.touches[0].pageX; const currTime = Date.now();
-    const d = (currX - sX)*0.015;
+    const d = (currX - sX)*0.04;
     updateRot(dIdx, rotations[dIdx] + d, total);
     
     const dt = currTime - lastTime;
@@ -538,9 +538,9 @@ function setupCarousel(dIdx, total) {
     let v = velocity *0.8;
 
     const animate = () => {
-      if(Math.abs(v) > 0.6) { // Frenado progresivo
+      if(Math.abs(v) > 0.1) { // Frenado progresivo
         currentRot += v; 
-        v *= 0.5; // Factor de fricción matemático solicitado
+        v *= 0.9; // Factor de fricción matemático solicitado
         updateRot(dIdx, currentRot, total);
         rafId = requestAnimationFrame(animate);
       } else {
