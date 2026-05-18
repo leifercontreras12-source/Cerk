@@ -540,7 +540,7 @@ function setupCarousel(dIdx, total) {
     const animate = () => {
       if(Math.abs(v) > 0.3) { // Frenado progresivo
         currentRot += v; 
-        v *= 0.45; // Factor de fricción matemático solicitado
+        v *= 0.5; // Factor de fricción matemático solicitado
         updateRot(dIdx, currentRot, total);
         rafId = requestAnimationFrame(animate);
       } else {
