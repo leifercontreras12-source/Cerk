@@ -322,7 +322,7 @@ const compressImage = (file) => {
         canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7);
+        canvas.toBlob((blob) => resolve(blob), 'image/webP', 0.75);
       };
     };
   });
