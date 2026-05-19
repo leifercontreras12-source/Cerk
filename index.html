@@ -194,67 +194,107 @@ body {
   </div>
   
   <div id="dials-root" class="dial-container"></div>
-  
-  <div class="register-section">
-    <p class="register-text">¿Quieres formar parte de nuestro equipo?</p>
-    <button class="btn-navy" style="width: 85%;" onclick="mostrarRegistro()">REGÍSTRATE</button>
-    <p class="legal-footer">Al navegar en +Cerk, aceptas nuestros <a href="/TERMINOS.pdf" target="_blank" style="color: var(--accent-blue); text-decoration: underline;">Términos y Condiciones</a> de Uso</p>
-  </div>
+    
+    <div class="register-section">
+  <p class="register-text">¿Quieres formar parte de nuestro equipo?</p>
+  <button class="btn-navy" style="width: 85%;" onclick="mostrarRegistro()">REGÍSTRATE</button>
+  <p class="legal-footer">Al navegar en +Cerk, aceptas nuestros <a href="/TERMINOS.pdf" target="_blank" style="color: var(--accent-blue); text-decoration: underline;">Términos y Condiciones</a> de Uso</p>
 </div>
 
 <div id="reg-ui" class="screen">
   <div class="form-card">
     <h2 style="color: var(--navy-deep); text-align: center; margin-top: 0; margin-bottom: 25px; font-weight: 900;">REGISTRO</h2>
     
-    <div class="form-group"><label>Nombre del Comercio</label><input type="text" id="reg-nombre"></div>
-    
-    <div class="form-group"><label>Categoría</label><select id="reg-dial" onchange="actualizarSubcategorias()"><option value="">Selecciona...</option></select></div>
-    
-    <div class="form-group"><label>Subcategoría</label><select id="reg-sub" onchange="actualizarSubdivisiones()" disabled></select></div>
-    
-    <div class="form-group"><label>Subdivisión (Tipo)</label><select id="reg-tipo" disabled></select></div>
-    
-    <div class="form-group"><label>WhatsApp</label><input type="tel" id="reg-ws" placeholder="Ej: 584241234567"></div>
-    
-    <div class="form-group"><label>Correo</label><input type="email" id="reg-email" placeholder="comercio@correo.com"></div>
-    
-    <!-- Horario Dinámico -->
-    <div class="form-group">
-      <label>DIAS DE OPERACION</label>
-      <div id="day-selector" style="display:flex; gap:5px; margin-bottom:15px; justify-content:space-between;">
-        <div class="day-btn" data-day="LUN">LUN</div><div class="day-btn" data-day="MAR">MAR</div>
-        <div class="day-btn" data-day="MIE">MIE</div><div class="day-btn" data-day="JUE">JUE</div>
-        <div class="day-btn" data-day="VIE">VIE</div><div class="day-btn" data-day="SAB">SAB</div>
-        <div class="day-btn" data-day="DOM">DOM</div>
+    <!-- CONTENEDOR DE PLANES ELEGANTES -->
+    <div id="planes-container" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+      
+      <!-- TARJETA ESTÁNDAR ($1) -->
+      <div id="plan-card-normal" onclick="seleccionarPlan('normal')" style="border: 2px solid #7a8a99; border-radius: 16px; padding: 15px; background: var(--white); transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span style="font-weight: 900; color: var(--navy-deep); font-size: 1.1rem;">PLAN ESTÁNDAR</span>
+          <span style="font-weight: 900; color: var(--navy-deep); font-size: 1.2rem;">$1<span style="font-size: 0.8rem; font-weight: normal;">/mes</span></span>
+        </div>
+        <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: #555; line-height: 1.4;">
+          <li>📍 Ubicación exacta en el Directorio Interactivo (Pin Tradicional).</li>
+          <li>📸 Vitrina visual estática con hasta 3 fotos de tu local.</li>
+          <li>⏰ Indicador de Horario Comercial escrito de tu negocio.</li>
+          <li>💬 Botón directo de WhatsApp para recibir pedidos.</li>
+        </ul>
       </div>
-      <label style="text-transform:none; font-weight:bold;"><input type="checkbox" id="break-toggle" onchange="checkFormValidity()"> ¿Cierras a mediodía? (Horario partido)</label>
-      <div style="display:flex; gap:10px; margin-top:10px; align-items:center;">
-        <input type="time" id="t-open"> <span style="font-weight:bold;">a</span> <input type="time" id="t-close">
-      </div>
-      <div id="break-times" style="display:none; gap:10px; margin-top:10px; align-items:center;">
-        <input type="time" id="t-open2"> <span style="font-weight:bold;">a</span> <input type="time" id="t-close2">
+
+      <!-- TARJETA PREMIUM ($3) -->
+      <div id="plan-card-premium" onclick="seleccionarPlan('premium')" style="border: 2px solid #7a8a99; border-radius: 16px; padding: 15px; background: var(--white); transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span style="font-weight: 900; color: var(--navy-deep); font-size: 1.1rem;">PLAN PREMIUM 🌟</span>
+          <span style="font-weight: 900; color: var(--navy-deep); font-size: 1.2rem;">$3<span style="font-size: 0.8rem; font-weight: normal;">/mes</span></span>
+        </div>
+        <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: #555; line-height: 1.4;">
+          <li>📍 Ubicación destacada con Pin en forma de Estrella.</li>
+          <li>🌟 <b>Sello de Comercio Verificado</b> en tu Vitrina Digital.</li>
+          <li>📸 Vitrina visual ampliada con hasta 5 fotos para lucir tu negocio.</li>
+          <li>⏰ Indicador en Tiempo Real si tu negocio está <b>"Abierto" o "Cerrado"</b>.</li>
+          <li>🔄 <b>Edición Mensual Libre</b> para subir promociones y cambiar fotos.</li>
+          <li>💬 Botón directo de WhatsApp para clientes.</li>
+          <li>🗺️ <b>Botón "Ruta Inteligente" (¿Cómo llego?)</b> directo a tu local.</li>
+        </ul>
       </div>
     </div>
 
-    <div class="form-group">
-      <label>Fotos</label>
-      <input type="file" id="reg-fotos" multiple accept="image/*">
-      <span class="help-text">FOTOS (MÍN. 2 - MÁX. 3 - 3MB C/U)</span>
+    <!-- CONTENEDOR DESPLEGABLE DEL FORMULARIO (Inicia oculto) -->
+    <div id="formulario-desplegable" style="display: none; transition: all 0.4s ease;">
+      
+      <div class="form-group"><label>Nombre del Comercio</label><input type="text" id="reg-nombre"></div>
+      
+      <div class="form-group"><label>Categoría</label><select id="reg-dial" onchange="actualizarSubcategorias()"><option value="">Selecciona...</option></select></div>
+      
+      <!-- Mensajes guía por defecto y bloqueados de inicio -->
+      <div class="form-group"><label>Subcategoría</label><select id="reg-sub" onchange="actualizarSubdivisiones()" disabled><option value="">⚠️ Elija primero una categoría</option></select></div>
+      
+      <div class="form-group"><label>Subdivisión (Tipo)</label><select id="reg-tipo" disabled><option value="">⚠️ Elija primero una subcategoría</option></select></div>
+      
+      <div class="form-group"><label>WhatsApp</label><input type="tel" id="reg-ws" placeholder="Ej: 584241234567"></div>
+      
+      <div class="form-group"><label>Correo</label><input type="email" id="reg-email" placeholder="comercio@correo.com"></div>
+      
+      <!-- Horario Dinámico -->
+      <div class="form-group">
+        <label>DIAS DE OPERACION</label>
+        <div id="day-selector" style="display:flex; gap:5px; margin-bottom:15px; justify-content:space-between;">
+          <div class="day-btn" data-day="LUN">LUN</div><div class="day-btn" data-day="MAR">MAR</div>
+          <div class="day-btn" data-day="MIE">MIE</div><div class="day-btn" data-day="JUE">JUE</div>
+          <div class="day-btn" data-day="VIE">VIE</div><div class="day-btn" data-day="SAB">SAB</div>
+          <div class="day-btn" data-day="DOM">DOM</div>
+        </div>
+        <label style="text-transform:none; font-weight:bold;"><input type="checkbox" id="break-toggle" onchange="checkFormValidity()"> ¿Cierras a mediodía? (Horario partido)</label>
+        <div style="display:flex; gap:10px; margin-top:10px; align-items:center;">
+          <input type="time" id="t-open"> <span style="font-weight:bold;">a</span> <input type="time" id="t-close">
+        </div>
+        <div id="break-times" style="display:none; gap:10px; margin-top:10px; align-items:center;">
+          <input type="time" id="t-open2"> <span style="font-weight:bold;">a</span> <input type="time" id="t-close2">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Fotos</label>
+        <input type="file" id="reg-fotos" multiple accept="image/*">
+        <!-- El texto de abajo cambiará automáticamente por JavaScript -->
+        <span class="help-text" id="fotos-guia-texto">FOTOS (MÍN. 2 - MÁX. 3 - 3MB C/U)</span>
+      </div>
+      
+      <!-- Botón GPS -->
+      <button class="btn-navy" id="btn-gps" style="background: #e0f7fa; color:#173b66; border:2px dashed #173b66; margin-bottom: 25px; width: 100%; transition: 0.4s;" onclick="capturarGPS()">
+        Capturar GPS <br><span style="color:#e63946; font-size:0.75rem; display:block; margin-top:5px;">¡Hazlo desde el local físico para precisión!</span>
+      </button>
+      
+      <div class="form-group" style="text-align:center;">
+        <label style="display:inline-block; font-weight:bold; text-transform:none;">
+          <input type="checkbox" id="reg-acepto" onchange="checkFormValidity()"> Acepto los <a href="/TERMINOS.pdf" target="_blank" style="color: var(--accent-blue); text-decoration: underline;">Términos y Condiciones</a> de Uso
+        </label>
+      </div>
+
+      <button class="btn-navy" id="btn-activar" onclick="procesarRegistroConPlan()" style="width: 100%;" disabled>ACTIVAR Y PAGAR</button>
     </div>
     
-    <!-- Botón GPS -->
-    <button class="btn-navy" id="btn-gps" style="background: #e0f7fa; color:#173b66; border:2px dashed #173b66; margin-bottom: 25px; width: 100%; transition: 0.4s;" onclick="capturarGPS()">
-      Capturar GPS <br><span style="color:#e63946; font-size:0.75rem; display:block; margin-top:5px;">¡Hazlo desde el local físico para precisión!</span>
-    </button>
-    
-    <div class="form-group" style="text-align:center;">
-      <label style="display:inline-block; font-weight:bold; text-transform:none;">
-        <input type="checkbox" id="reg-acepto" onchange="checkFormValidity()"> Acepto los <a href="/TERMINOS.pdf" target="_blank" style="color: var(--accent-blue); text-decoration: underline;">Términos y Condiciones</a> de Uso
-
-      </label>
-    </div>
-
-    <button class="btn-navy" id="btn-activar" onclick="procesarRegistro()" style="width: 100%;" disabled>ACTIVAR Y PAGAR</button>
     <button onclick="irA('main-ui')" style="border:none; background:none; width:100%; margin-top:15px; color: #7a8a99; font-weight: bold; font-size: 0.9rem;">Volver al Inicio</button>
   </div>
 </div>
@@ -677,7 +717,100 @@ function checkFormValidity() {
 }
 
 // --- COMPRESIÓN Y REGISTRO ---
-async function procesarRegistro() {
+// ==========================================
+// CONTROL DE PLANES Y AUTOMATIZACIÓN DE VITRINA
+// ==========================================
+
+let planSeleccionado = null; // Almacena el plan activo ('normal' o 'premium')
+
+// 1. Controla el despliegue de las tarjetas y limpia los datos al cambiar de opinión
+function seleccionarPlan(plan) {
+  planSeleccionado = plan;
+  
+  const cardNormal = document.getElementById('plan-card-normal');
+  const cardPremium = document.getElementById('plan-card-premium');
+  const formulario = document.getElementById('formulario-desplegable');
+  const fotosTexto = document.getElementById('fotos-guia-texto');
+  
+  // RESET DE SEGURIDAD: Limpia todo el formulario para evitar contaminar Supabase
+  document.getElementById('reg-nombre').value = '';
+  document.getElementById('reg-dial').value = '';
+  document.getElementById('reg-sub').innerHTML = '<option value="">⚠️ Elija primero una categoría</option>';
+  document.getElementById('reg-sub').disabled = true;
+  document.getElementById('reg-tipo').innerHTML = '<option value="">⚠️ Elija primero una subcategoría</option>';
+  document.getElementById('reg-tipo').disabled = true;
+  document.getElementById('reg-ws').value = '';
+  document.getElementById('reg-email').value = '';
+  document.getElementById('reg-fotos').value = '';
+  document.getElementById('reg-acepto').checked = false;
+  document.getElementById('break-toggle').checked = false;
+  document.getElementById('break-times').style.display = 'none';
+  document.getElementById('btn-activar').disabled = true;
+  document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+
+  // Efecto visual sofisticado de selección y opacidad en los cuadros
+  if (plan === 'normal') {
+    cardNormal.style.border = "3px solid var(--accent-blue)";
+    cardNormal.style.background = "#f4f7f6";
+    cardPremium.style.border = "1px solid #7a8a99";
+    cardPremium.style.background = "var(--white)";
+    cardPremium.style.opacity = "0.5";
+    cardNormal.style.opacity = "1";
+    fotosTexto.textContent = "FOTOS (MÍN. 2 - MÁX. 3 - 3MB C/U)";
+  } else {
+    cardPremium.style.border = "3px solid var(--accent-blue)";
+    cardPremium.style.background = "#f4f7f6";
+    cardNormal.style.border = "1px solid #7a8a99";
+    cardNormal.style.background = "var(--white)";
+    cardNormal.style.opacity = "0.5";
+    cardPremium.style.opacity = "1";
+    fotosTexto.textContent = "FOTOS (MÍN. 2 - MÁX. 5 - 3MB C/U)";
+  }
+
+  // Despliega el formulario en la misma pantalla
+  formulario.style.display = 'block';
+}
+
+// 2. Modificación de tus funciones en cascada originales para inyectar los mensajes guía
+function actualizarSubcategorias() {
+  const catSelect = document.getElementById('reg-dial');
+  const subSelect = document.getElementById('reg-sub');
+  const tipoSelect = document.getElementById('reg-tipo');
+  
+  if (catSelect.value === "") {
+    subSelect.innerHTML = '<option value="">⚠️ Elija primero una categoría</option>';
+    subSelect.disabled = true;
+    tipoSelect.innerHTML = '<option value="">⚠️ Elija primero una subcategoría</option>';
+    tipoSelect.disabled = true;
+    return;
+  }
+  
+  // Limpieza previa antes de que corra tu lógica de carga original
+  subSelect.innerHTML = '<option value="">Selecciona una subcategoría...</option>';
+  subSelect.disabled = false;
+  
+  // [AQUÍ CONTINÚA TU CÓDIGO ORIGINAL QUE INYECTA LAS SUBCATEGORÍAS REALES EN EL SELECT]
+}
+
+function actualizarSubdivisiones() {
+  const subSelect = document.getElementById('reg-sub');
+  const tipoSelect = document.getElementById('reg-tipo');
+  
+  if (subSelect.value === "") {
+    tipoSelect.innerHTML = '<option value="">⚠️ Elija primero una subcategoría</option>';
+    tipoSelect.disabled = true;
+    return;
+  }
+  
+  // Limpieza previa antes de que corra tu lógica de carga original
+  tipoSelect.innerHTML = '<option value="">Selecciona una subdivisión...</option>';
+  tipoSelect.disabled = false;
+  
+  // [AQUÍ CONTINÚA TU CÓDIGO ORIGINAL QUE INYECTA LAS SUBDIVISIONES REALES EN EL SELECT]
+}
+
+// 3. Tu función unificada de compresión, registro en Supabase y doble envío a WhatsApp
+async function procesarRegistroConPlan() {
   const btn = document.getElementById('btn-activar');
   btn.innerText = "PROCESANDO..."; btn.disabled = true; btn.style.opacity = '0.5';
 
@@ -685,8 +818,18 @@ async function procesarRegistro() {
   const whatsappComercio = document.getElementById('reg-ws').value.trim();
   const folderPath = `${nombreComercio}-${whatsappComercio}`;
   const files = document.getElementById('reg-fotos').files;
+  
+  // CANDADO DE UX: Valida el límite estricto de fotos según el plan abierto
+  const maxFotosPermitidas = (planSeleccionado === 'premium') ? 5 : 3;
+  if (files.length < 2 || files.length > maxFotosPermitidas) {
+    alert(`Error: Para el Plan ${planSeleccionado === 'premium' ? 'Premium' : 'Estándar'} debes subir entre 2 y ${maxFotosPermitidas} fotos.`);
+    btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1';
+    return;
+  }
+
   let fotosUrls = [];
 
+  // Tu bucle original de compresión y subida a Supabase Storage se queda intacto
   for (let i = 0; i < files.length; i++) {
     const compressedBlob = await compressImage(files[i]);
     const fileName = `${folderPath}/foto_${Date.now()}_${i}.jpg`;
@@ -696,6 +839,7 @@ async function procesarRegistro() {
     fotosUrls.push(urlData.publicUrl);
   }
 
+  // Tu lógica original de armado de Horario escrito
   const daysStr = Array.from(document.querySelectorAll('.day-btn.active')).map(el => el.dataset.day).join(',');
   const tOp1 = document.getElementById('t-open').value;
   const tCl1 = document.getElementById('t-close').value;
@@ -707,34 +851,66 @@ async function procesarRegistro() {
     horarioFinal = `${daysStr}|${tOp1}-${tCl1}/${tOp2}-${tCl2}`;
   }
 
+  // EL PAYLOAD: Tus datos limpios inyectando la nueva columna Plan en Supabase
   const payload = {
     Nombre: formatText(document.getElementById('reg-nombre').value),
     Dial: formatText(document.getElementById('reg-dial').value),
     Tipo: formatText(document.getElementById('reg-tipo').value),
-    WhatsApp: document.getElementById('reg-ws').value.trim(),
+    WhatsApp: whatsappComercio,
     Latitud: regCoords.lat,
     Longitud: regCoords.lon,
     Email_propietario: document.getElementById('reg-email').value.trim().toLowerCase(),
     Horario: horarioFinal,
     Fotos_urls: fotosUrls,
     Pago_confirmado: false,
-    Acepto_terminos: "ACEPTADO"
+    Acepto_terminos: "ACEPTADO",
+    Plan: planSeleccionado // 👈 Registra automáticamente 'normal' o 'premium' en tu nueva columna
   };
 
   const { error } = await _supabase.from('Comercios').insert(payload);
 
   if(!error) {
+    // Limpieza automática de la interfaz tras el registro exitoso
     document.querySelectorAll('#reg-ui input[type="text"], #reg-ui input[type="tel"], #reg-ui input[type="email"], #reg-ui input[type="time"], #reg-ui input[type="file"]').forEach(el => el.value = '');
     document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('break-toggle').checked = false;
     document.getElementById('break-times').style.display = 'none';
     document.getElementById('reg-acepto').checked = false;
-    document.getElementById('reg-sub').innerHTML = '<select disabled></select>';
-    document.getElementById('reg-tipo').innerHTML = '<select disabled></select>';
+    document.getElementById('reg-sub').innerHTML = '<option value="">⚠️ Elija primero una categoría</option>';
+    document.getElementById('reg-sub').disabled = true;
+    document.getElementById('reg-tipo').innerHTML = '<option value="">⚠️ Elija primero una subcategoría</option>';
+    document.getElementById('reg-tipo').disabled = true;
     
     const btnGps = document.getElementById('btn-gps');
     if(btnGps) { 
       btnGps.style.background = '#e0f7fa'; btnGps.style.color = '#173b66'; btnGps.style.border = '2px dashed #173b66';
+      btnGps.innerHTML = `Capturar GPS <br><span style="color:#e63946; font-size:0.75rem; display:block; margin-top:5px;">¡Hazlo desde el local físico para precisión!</span>`;
+    }
+    regCoords = null;
+    btn.innerText = "ACTIVAR Y PAGAR";
+    
+    // Ocultar formulario de nuevo y regresar a la vista inicial
+    document.getElementById('formulario-desplegable').style.display = 'none';
+    document.getElementById('plan-card-normal').style.border = "2px solid #7a8a99";
+    document.getElementById('plan-card-premium').style.border = "2px solid #7a8a99";
+    document.getElementById('plan-card-normal').style.opacity = "1";
+    document.getElementById('plan-card-premium').style.opacity = "1";
+    irA('main-ui');
+
+    // DOBLE ENVÍO: Preparación de tus mensajes de WhatsApp personalizados con precios
+    let precio = (planSeleccionado === 'premium') ? "$3" : "$1";
+    let planTexto = (planSeleccionado === 'premium') ? "Premium" : "Estándar";
+    let mensajeEncodado = encodeURIComponent(`Hola, acabo de registrar mi comercio ${payload.Nombre} en el Plan ${planTexto} (${precio}). Solicito los datos de pago para activar mi vitrina comercial.`);
+    
+    // Dispara el chat hacia tu número (584247126548) de forma nativa en pestaña nueva
+    window.open(`https://whatsapp.com{mensajeEncodado}`, '_blank');
+
+  } else {
+    alert("Error de red o base de datos. Intenta nuevamente."); 
+    btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1';
+  }
+}
+
       btnGps.innerHTML = `Capturar GPS <br><span style="color:#e63946; font-size:0.75rem; display:block; margin-top:5px;">¡Hazlo desde el local físico para precisión!</span>`;
     }
     regCoords = null;
