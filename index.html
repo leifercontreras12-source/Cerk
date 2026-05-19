@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="manifest" href="/manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a3c63">
+<title>+CERK</title>
+
+<!-- Leaflet CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Leaflet Routing Machine CSS & JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+  --navy-deep: #173b66;
+  --accent-blue: #00b4d8;
+  --white: #ffffff;
+}
+html, body { height: 100%; margin: 0; padding: 0; }
+body {
+  background-image: linear-gradient(rgba(248, 249, 250, 0.2), rgba(248, 249, 250, 0.2)), url('1778466671825 (1).webp');
+  background-size: cover; background-position: center; background-attachment: fixed;
+  overflow-x: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Pantallas y Transiciones */
+.screen { display: none; min-height: 100vh; width: 100%; flex-direction: column; align-items: center; }
+.active { display: flex; }
+#splash-screen {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; justify-content: center; align-items: center; z-index: 99999;
+  background: var(--white);
+  transition: opacity 0.5s ease-out, visibility 0.5s;
+}
+#welcome-screen {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: var(--navy-deep); color: var(--white);
+  display: none; flex-direction: column; justify-content: flex-start; align-items: flex-start; z-index: 99998;
+  transition: opacity 0.6s ease-out;
+}
+.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+
+/* Transparencia Total en Encabezado Home */
+.brand {
+  background: transparent;
+  width: 100%; height: 75px;
+  display: flex; justify-content: center; align-items: center;
+  position: relative; top: 0; z-index: 1000;
+}
+.brand-text { 
+  font-family: "Georgia", serif; font-style: italic; font-size: 2.3rem; letter-spacing: -1px; 
+  text-shadow: 0 2px 10px rgba(255,255,255,0.8);
+}
+.plus-sign { color: var(--accent-blue); font-weight: 900; text-shadow: 0 0 1px var(--accent-blue); }
+.cerk-text { color: #7a8a99; font-weight: 800;}
+
+/* Contadores estilo Píldora Premium (Flotantes transparentes) */
+.stat-box {
+  position: absolute; font-size: 0.65rem; color: var(--navy-deep); font-weight: 800;
+  text-align: center; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(2px);
+  padding: 6px 12px; border-radius: 20px; line-height: 1.2;
+  font-family: 'Georgia', serif; font-style: italic; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+#count_hoy { left: 15px; }
+#count_mes { right: 15px; }
+
+/* Diales 3D Premium */
+.dial-container { width: 100%; padding: 15px 0 5px 0; z-index: 2; position: relative;}
+.dial-wrapper { width: 100%; height: 135px; margin-bottom: 5px; }
+.dial-label {
+  font-family: 'Georgia', serif; font-size: 0.85rem; font-weight: 900; text-transform: uppercase;
+  color: var(--navy-deep); text-align: center; margin-bottom: 12px; letter-spacing: 0.2px;
+  text-shadow: 0 2px 8px rgba(255,255,255,0.9);
+}
+.scene { width: 100%; height: 100px; perspective: 1000px; display: flex; justify-content: center; }
+.carousel {
+  width: 140px; height: 90px; position: absolute; transform-style: preserve-3d;
+}
+.carousel__item {
+  position: absolute; width: 130px; height: 85px; background: var(--white);
+  border-radius: 12px; border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15); overflow: hidden;
+  display: flex; flex-direction: column; align-items: center;
+}
+.item-img { width: 100%; height: 80%; object-fit: cover; pointer-events: none;}
+.item-text { font-size: 0.55rem; font-weight: 900; padding: 2px 2px; text-align: center; color: var(--navy-deep); width: 100%; pointer-events: none;}
+
+/* Sección de Registro Anclada al Fondo */
+.register-section {
+  width: 100%; margin-top: auto; padding: 20px 0 30px 0;
+  display: flex; flex-direction: column; align-items: center;
+  background: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0));
+  position: relative; z-index: 2;
+}
+.register-text {
+  font-family: "Georgia", serif; font-style: italic; color: var(--navy-deep);
+  margin-bottom: 12px; font-size: 1.1rem; text-align: center; font-weight: bold;
+}
+.legal-footer { font-size: 0.65rem; color: #7a8a99; margin-top: 15px; text-align: center; font-weight: bold;}
+
+/* Botones Especiales */
+.btn-navy {
+  background: var(--navy-deep); color: var(--white);
+  border: none; padding: 18px; border-radius: 50px;
+  font-weight: 900; font-size: 1rem; letter-spacing: 0.5px;
+  cursor: pointer; box-shadow: 0 8px 25px rgba(23, 59, 102, 0.3); transition: 0.3s;
+}
+.btn-navy:active { transform: scale(0.96); }
+
+/* Formulario Estilo Premium (Fondo Blanco Ligero) */
+.form-card {
+  width: 90%; max-width: 420px; background: rgba(255, 255, 255, 0.95);
+  border-radius: 25px; border: 1px solid rgba(255,255,255,0.5);
+  margin: 20px 0; padding: 35px 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+}
+.form-group { margin-bottom: 20px; }
+.form-group label { font-size: 0.85rem; font-weight: 800; color: var(--navy-deep); margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px;}
+.form-group input, .form-group select {
+  width: 100%; padding: 16px; border: 1.5px solid #e2e8f0; background: #ffffff;
+  border-radius: 16px; font-size: 0.95rem; outline: none; transition: 0.3s; font-family: inherit;
+  box-sizing: border-box;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 4px rgba(0,180,216,0.15); }
+.help-text { font-size: 0.7rem; color: #7a8a99; margin-top: 5px; display: block; font-weight: bold;}
+
+/* Selector Días de Operación */
+.day-btn {
+  flex: 1; text-align: center; padding: 10px 0; background: #e2e8f0; color: #7a8a99;
+  border-radius: 8px; font-weight: 800; font-size: 0.75rem; transition: 0.3s;
+}
+.day-btn.active { background: var(--navy-deep); color: white; }
+
+/* Transparencia Total en Componentes del Mapa */
+.map-header { 
+  background: transparent; color: var(--navy-deep); padding: 15px 20px; display: flex;
+  justify-content: space-between; align-items: center; z-index: 1000; position:relative; pointer-events: none;
+}
+.map-header * { pointer-events: auto; }
+#map-title { text-shadow: 0 2px 10px rgba(255,255,255,0.9); background: rgba(255,255,255,0.6); padding: 5px 15px; border-radius: 20px;}
+.filter-bar { 
+  width: 100%; background: transparent; padding: 12px 15px; display: flex; gap: 10px;
+  overflow-x: auto; box-sizing: border-box; position: relative; z-index: 1000; pointer-events: none;
+}
+.filter-bar::-webkit-scrollbar { display: none; }
+.globito {
+  background: var(--accent-blue); color: white; padding: 10px 20px; pointer-events: auto;
+  border-radius: 30px; font-size: 0.8rem; font-weight: bold; border: none; white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0,180,216,0.3);
+}
+#map { width: 100%; flex: 1; min-height: 400px; z-index: 1; position: absolute; top:0; left:0; height: 100%;}
+
+.leaflet-popup-content-wrapper { border-radius: 20px !important; box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important; padding: 5px !important;}
+.leaflet-popup-content { width: 280px !important; margin: 15px !important; }
+.leaflet-container a.leaflet-popup-close-button { top: 10px !important; right: 10px !important; color: #a0aec0 !important; font-weight: bold; }
+
+/* Ocultar panel de instrucciones de Leaflet Routing Machine para mantener UI limpia */
+.leaflet-routing-container { display: none !important; }
+
+/* Modal Calificaciones */
+#rating-modal {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(23, 59, 102, 0.9); backdrop-filter: blur(10px);
+  display: none; justify-content: center; align-items: center; z-index: 100000;
+}
+.rating-card {
+  background: white; padding: 30px; border-radius: 25px; text-align: center; width: 85%; max-width: 350px; position: relative;
+}
+.close-rating { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; font-weight: bold; color: #a0aec0; }
+.star { font-size: 2.5rem; color: #e2e8f0; margin: 0 5px; transition: 0.2s; cursor: pointer;}
+.star.selected { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+</style>
+</head>
+<body>
+
+<div id="splash-screen">
+  <img src="1778462340724 (1).png" alt="Logo" style="width:250px;">
+</div>
+
+<div id="welcome-screen"></div>
+
+<div id="main-ui" class="screen active">
+  <div class="brand">
+    <div id="count_hoy" class="stat-box"></div>
+    <div class="brand-text"><span class="plus-sign">+</span><span class="cerk-text">Cerk</span></div>
+    <div id="count_mes" class="stat-box"></div>
+  </div>
+  
+  <div id="dials-root" class="dial-container"></div>
+  
+  <div class="register-section">
+    <p class="register-text">¿Quieres formar parte de nuestro equipo?</p>
+    <button class="btn-navy" style="width: 85%;" onclick="mostrarRegistro()">REGÍSTRATE</button>
+    <p class="legal-footer">Al navegar en +Cerk, aceptas nuestros <a href="/TERMINOS.pdf" target="_blank" style="color: var(--accent-blue); text-decoration: underline;">Términos y Condiciones</a> de Uso</p>
+  </div>
+</div>
+
+<div id="reg-ui" class="screen">
+  <div class="form-card">
+    <h2 style="color: var(--navy-deep); text-align: center; margin-top: 0; margin-bottom: 25px; font-weight: 900;">REGISTRO</h2>
+    
+    <div class="form-group"><label>Nombre del Comercio</label><input type="text" id="reg-nombre"></div>
+    
+    <div class="form-group"><label>Categoría</label><select id="reg-dial" onchange="actualizarSubcategorias()"><option value="">Selecciona...</option></select></div>
+    
+    <div class="form-group"><label>Subcategoría</label><select id="reg-sub" onchange="actualizarSubdivisiones()" disabled></select></div>
+    
+    <div class="form-group"><label>Subdivisión (Tipo)</label><select id="reg-tipo" disabled></select></div>
+    
+    <div class="form-group"><label>WhatsApp</label><input type="tel" id="reg-ws" placeholder="Ej: 584241234567"></div>
+    
+    <div class="form-group"><label>Correo</label><input type="email" id="reg-email" placeholder="comercio@correo.com"></div>
+    
+    <!-- Horario Dinámico -->
+    <div class="form-group">
+      <label>DIAS DE OPERACION</label>
+      <div id="day-selector" style="display:flex; gap:5px; margin-bottom:15px; justify-content:space-between;">
+        <div class="day-btn" data-day="LUN">LUN</div><div class="day-btn" data-day="MAR">MAR</div>
+        <div class="day-btn" data-day="MIE">MIE</div><div class="day-btn" data-day="JUE">JUE</div>
+        <div class="day-btn" data-day="VIE">VIE</div><div class="day-btn" data-day="SAB">SAB</div>
+        <div class="day-btn" data-day="DOM">DOM</div>
+      </div>
+      <label style="text-transform:none; font-weight:bold;"><input type="checkbox" id="break-toggle" onchange="checkFormValidity()"> ¿Cierras a mediodía? (Horario partido)</label>
+      <div style="display:flex; gap:10px; margin-top:10px; align-items:center;">
+        <input type="time" id="t-open"> <span style="font-weight:bold;">a</span> <input type="time" id="t-close">
+      </div>
+      <div id="break-times" style="display:none; gap:10px; margin-top:10px; align-items:center;">
+        <input type="time" id="t-open2"> <span style="font-weight:bold;">a</span> <input type="time" id="t-close2">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Fotos</label>
+      <input type="file" id="reg-fotos" multiple accept="image/*">
+      <span class="help-text">FOTOS (MÍN. 2 - MÁX. 3 - 3MB C/U)</span>
+    </div>
+    
+    <!-- Botón GPS -->
+    <button class="btn-navy" id="btn-gps" style="background: #e0f7fa; color:#173b66; border:2px dashed #173b66; margin-bottom: 25px; width: 100%; transition: 0.4s;" onclick="capturarGPS()">
+      Capturar GPS <br><span style="color:#e63946; font-size:0.75rem; display:block; margin-top:5px;">¡Hazlo desde el local físico para precisión!</span>
+    </button>
+    
+    <div class="form-group" style="text-align:center;">
+      <label style="display:inline-block; font-weight:bold; text-transform:none;">
+        <input type="checkbox" id="reg-acepto" onchange="checkFormValidity()"> Acepto los <a href="/TERMINOS.pdf" target="_blank" style="color: var(--accent-blue); text-decoration: underline;">Términos y Condiciones</a> de Uso
+
+      </label>
+    </div>
+
+    <button class="btn-navy" id="btn-activar" onclick="procesarRegistro()" style="width: 100%;" disabled>ACTIVAR Y PAGAR</button>
+    <button onclick="irA('main-ui')" style="border:none; background:none; width:100%; margin-top:15px; color: #7a8a99; font-weight: bold; font-size: 0.9rem;">Volver al Inicio</button>
+  </div>
+</div>
+
+<div id="map-view" class="screen" style="position: relative; overflow: hidden;">
+  <div id="map"></div>
+  <div class="map-header">
+    <span id="map-title" style="font-weight: 900; letter-spacing: 1px; font-size: 1.1rem;">MAPA</span>
+    <button onclick="irA('main-ui')" style="background:var(--accent-blue); border:none; color:white; padding:10px 18px; border-radius:15px; font-weight:bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">CERRAR</button>
+  </div>
+  <div id="filter-container" class="filter-bar"></div>
+</div>
+
+<!-- Modal Calificaciones -->
+<div id="rating-modal">
+  <div class="rating-card">
+    <div class="close-rating" onclick="cerrarModalCalificacion()">×</div>
+    <h3 style="color: var(--navy-deep); margin-top: 0; font-size:1.2rem;">¿Cómo fue tu experiencia?</h3>
+    <div style="display:flex; justify-content:center; margin: 20px 0;">
+      <span class="star" onclick="enviarCalificacion(1)">★</span>
+      <span class="star" onclick="enviarCalificacion(2)">★</span>
+      <span class="star" onclick="enviarCalificacion(3)">★</span>
+      <span class="star" onclick="enviarCalificacion(4)">★</span>
+      <span class="star" onclick="enviarCalificacion(5)">★</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// [MARCADOR-ADMIN] CONFIGURACIÓN SUPABASE
+const SUPABASE_URL = "https://zuknitfklgiuoipnjraj.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1a25pdGZrbGdpdW9pcG5qcmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjY4OTcsImV4cCI6MjA5MzM0Mjg5N30.aOeE9uCgGM4DA8xgUap5zqXQqYxRZG0aDa3_V1Cjuxo";
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let map, markersLayer, userCoords, regCoords;
+let rotations = new Array(10).fill(0);
+let radiusCircle = null;
+let routingControl = null; // Instancia OSRM Peatonal
+let comercioPendienteCalificar = null;
+let ratingActivado = false; // Flag para controlar aparición al retorno
+
+const categoriasConfig = ["GASTRONOMIA", "SALUD Y BIENESTAR", "ESTILO Y BELLEZA", "HOGAR Y CONSTRUCCION", "AUTOMOTRIZ", "DIESEL E INDUSTRIA", "INSUMOS Y DISTRIBUCION", "TECNOLOGIA Y COMUNICACION", "SERVICIOS Y LOGISTICA", "EXCLUSIVO"];
+
+// --- CONFIGURACIÓN DEL PIN PERSONALIZADO ---
+const cerkIcon = L.icon({
+  iconUrl: 'pin_cerk.webp',
+  iconSize: [45, 45],
+  iconAnchor: [22, 45],
+  popupAnchor: [0, -40]
+});
+
+// --- UTILIDADES DE LIMPIEZA Y COMPRESIÓN ---
+const formatText = (text) => text ? text.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
+
+const compressImage = (file) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => resolve(blob), 'image/webp', 0.75);
+      };
+    };
+  });
+};
+
+// --- LOGICA DE ESTADO ABIERTO/CERRADO (SOPORTA AMBOS FORMATOS) ---
+function calcularEstadoHorario(horarioStr) {
+  try {
+    if(!horarioStr) return `<span style='color:#7a8a99; font-weight:bold;'>🕒 HORARIO NO DEFINIDO</span>`;
+    if(horarioStr.includes("24 HORAS")) return `<span style='color:#25D366; font-weight:bold;'>🟢 ABIERTO 24 HORAS</span>`;
+
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMins = now.getMinutes();
+    const currentTime = currentHour + currentMins/60;
+
+    if(horarioStr.includes("|")) {
+      const dayIndex = now.getDay();
+      const daysMap = ["DOM","LUN","MAR","MIE","JUE","VIE","SAB"];
+      const todayStr = daysMap[dayIndex];
+      
+      const parts = horarioStr.split("|");
+      const opsDays = parts[0];
+      const opsTimes = parts[1];
+
+      if(!opsDays.includes(todayStr)) return `<span style='color:#e63946; font-weight:bold;'>🔴 Ya cerraron 🥺</span>`;
+
+      let openStatus = false;
+      let minsToClose = Infinity;
+
+      const slots = opsTimes.split("/");
+      for(let slot of slots) {
+        const [op, cl] = slot.split("-");
+        if(!op || !cl) continue;
+        const tOp = parseInt(op.split(":")[0]) + parseInt(op.split(":")[1])/60;
+        let tCl = parseInt(cl.split(":")[0]) + parseInt(cl.split(":")[1])/60;
+        if(tCl < tOp) tCl += 24;
+
+        if(currentTime >= tOp && currentTime < tCl) {
+          openStatus = true;
+          minsToClose = (tCl - currentTime) * 60;
+          break;
+        }
+      }
+
+      if(openStatus) {
+        if(minsToClose <= 10) return `<span style='color:#e63946; font-weight:bold;'>🔴 ¡Corre! Están cerrando 🏃🏻</span>`;
+        if(minsToClose <= 30) return `<span style='color:#f4a261; font-weight:bold;'>🟡 ¡Apúrate que sí llegas! 🤩</span>`;
+        return `<span style='color:#25D366; font-weight:bold;'>🟢 YA está abierto 😎</span>`;
+      } else {
+        return `<span style='color:#e63946; font-weight:bold;'>🔴 Ya cerraron 🥺</span>`;
+      }
+    }
+
+    const regex = /(\d{1,2})[:.]?(\d{0,2})\s*(AM|PM)?\s*[-A]\s*(\d{1,2})[:.]?(\d{0,2})\s*(AM|PM)?/i;
+    const match = horarioStr.match(regex);
+    if(!match) return `<span style='color:#7a8a99; font-weight:bold;'>🕒 ${horarioStr}</span>`;
+
+    let [ , h1, m1, p1, h2, m2, p2 ] = match;
+    h1 = parseInt(h1); m1 = parseInt(m1||0);
+    h2 = parseInt(h2); m2 = parseInt(m2||0);
+    p1 = p1 ? p1.toUpperCase() : 'AM';
+    p2 = p2 ? p2.toUpperCase() : 'PM';
+
+    if(p1 === 'PM' && h1 !== 12) h1 += 12;
+    if(p1 === 'AM' && h1 === 12) h1 = 0;
+    if(p2 === 'PM' && h2 !== 12) h2 += 12;
+    if(p2 === 'AM' && h2 === 12) h2 = 0;
+
+    const openTime = h1 + m1/60;
+    const closeTime = h2 + m2/60;
+
+    let isAbierto = (closeTime > openTime) ? (currentTime >= openTime && currentTime < closeTime) : (currentTime >= openTime || currentTime < closeTime);
+    
+    if(isAbierto) {
+      let minsLeft = (closeTime - currentTime) * 60;
+      if(closeTime < openTime && currentTime >= openTime) minsLeft = (closeTime + 24 - currentTime) * 60;
+      if(minsLeft <= 10) return `<span style='color:#e63946; font-weight:bold;'>🔴 ¡Corre! Están cerrando!! 🏃🏻</span>`;
+      if(minsLeft <= 30) return `<span style='color:#f4a261; font-weight:bold;'>🟡 ¡Apúrate, que sí llegas! 🤩</span>`;
+      return `<span style='color:#25D366; font-weight:bold;'>🟢 Ahora está abierto 😎</span>`;
+    }
+    return `<span style='color:#e63946; font-weight:bold;'>🔴 Ya cerraron 🥺</span>`;
+    
+  } catch(e) {
+    return `<span style='color:#7a8a99; font-weight:bold;'>🕒 ${horarioStr}</span>`;
+  }
+}
+
+// --- Trazado Inteligente de Ruta (Leaflet Routing Machine + OSRM Peatonal) ---
+function trazarRuta(lat, lon) {
+  if(!userCoords) { alert("GPS no activado. Intenta de nuevo."); return; }
+  
+  if(routingControl) {
+    map.removeControl(routingControl);
+  }
+  
+  routingControl = L.Routing.control({
+    waypoints: [
+      L.latLng(userCoords.lat, userCoords.lon),
+      L.latLng(lat, lon)
+    ],
+    router: L.Routing.osrmv1({
+      language: 'es',
+      profile: 'foot' // Enrutamiento real peatonal por calles de OSM
+    }),
+    lineOptions: {
+      styles: [{color: '#00b4d8', opacity: 0.8, weight: 6, dashArray: '10, 10'}]
+    },
+    show: false, // UI Itinerario apagada
+    addWaypoints: false,
+    routeWhileDragging: false,
+    fitSelectedRoutes: true,
+    createMarker: function() { return null; } // Evita marcadores duplicados
+  }).addTo(map);
+}
+
+function prepararCalificacion(nombre) {
+  comercioPendienteCalificar = nombre;
+  ratingActivado = false; // Se activará cuando la app pase a segundo plano (al abrir WhatsApp)
+}
+
+// --- GENERADOR DEL POPUP PREMIUM ---
+function generarPopup(c) {
+  let fotosHTML = '';
+  if(c.Fotos_urls && Array.isArray(c.Fotos_urls) && c.Fotos_urls.length > 0) {
+    fotosHTML = `<div style="display:flex; overflow-x:auto; gap:6px; margin-bottom:10px; padding-bottom:5px;">` +
+    c.Fotos_urls.map(url => `<img src="${url}" style="width:100px; height:100px; object-fit:cover; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.15); flex-shrink:0;">`).join('') +
+    `</div>`;
+  }
+  const estado = calcularEstadoHorario(c.Horario);
+  return `
+    <div style="min-width: 240px; font-family: 'Segoe UI', sans-serif;">
+      <h3 style="margin: 0 0 8px 0; color: var(--navy-deep); font-size:1.15rem; text-transform:uppercase; letter-spacing: -0.5px;">${c.Nombre}</h3>
+      ${fotosHTML}
+      <div style="font-size: 0.85rem; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px;">${estado}</div>
+      <a href="https://wa.me/${c.WhatsApp}?text=Hola,%20acabo%20de%20ver%20su%20comercio%20en%20+CERK." target="_blank" onclick="prepararCalificacion('${c.Nombre}')"
+         style="display:block; text-align:center; background:#25D366; color:white; padding:12px; border-radius:12px; text-decoration:none; font-weight:bold; box-shadow:0 4px 10px rgba(37,211,102,0.3); font-size:0.9rem;">
+        Consulta con ellos!
+      </a>
+      <button onclick="trazarRuta(${c.Latitud}, ${c.Longitud})" style="display:block; width:100%; margin-top:8px; text-align:center; background:var(--navy-deep); color:white; padding:10px; border-radius:12px; border:none; font-weight:bold; font-size:0.85rem; cursor:pointer;">
+        Como llego? 📍
+      </button>
+    </div>
+  `;
+}
+
+// --- LÓGICA DEL CONTADOR ---
+async function initContador() {
+  const hoy = new Date().toISOString().split('T')[0];
+  const { data } = await _supabase.from('vistas_diarias').select('*').eq('fecha', hoy).single();
+  let actual = data ? data.conteo_real : 17;
+  if(!data) await _supabase.from('vistas_diarias').insert({fecha: hoy, conteo_real: 17});
+  else await _supabase.from('vistas_diarias').update({conteo_real: actual + 1}).eq('fecha', hoy);
+  document.getElementById('count_hoy').innerHTML = `HOY<br>${Math.floor((actual+1) * 1.4)}`;
+  const { data: todos } = await _supabase.from('vistas_diarias').select('conteo_real');
+  const mes = todos.reduce((a, b) => a + b.conteo_real, 0);
+  document.getElementById('count_mes').innerHTML = `MES<br>${Math.floor(mes * 1.4)}`;
+}
+
+// --- RECONSTRUCCIÓN DE DIALES 3D (CON FÍSICA MATEMÁTICA 0.85) ---
+async function cargarDiales() {
+  const root = document.getElementById('dials-root');
+  const { data: catData } = await _supabase.from('categorias').select('*').order('orden', {ascending: true});
+  
+  categoriasConfig.forEach((catName, dIdx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'dial-wrapper';
+    wrap.innerHTML = `<div class="dial-label">${catName}</div><div class="scene"><div class="carousel" id="car-${dIdx}"></div></div>`;
+    root.appendChild(wrap);
+    const car = wrap.querySelector(`#car-${dIdx}`);
+    const subs = catData.filter(c => c.grupo === catName);
+    
+    subs.forEach((s, iIdx) => {
+      const item = document.createElement('div');
+      item.className = 'carousel__item';
+      item.id = `it-${dIdx}-${iIdx}`;
+      item.innerHTML = `<img src="${s.imagen_url}" class="item-img"><div class="item-text">${s.nombre}</div>`;
+      item.onclick = () => abrirMapa(s.nombre);
+      car.appendChild(item);
+    });
+    setupCarousel(dIdx, subs.length);
+    updateRot(dIdx, 0, subs.length);
+  });
+}
+
+function setupCarousel(dIdx, total) {
+  const car = document.getElementById(`car-${dIdx}`); 
+  let sX = 0, moved = false, isTouching = false;
+  let lastX = 0, lastTime = 0, velocity = 0;
+  let rafId = null;
+
+  car.addEventListener('touchstart', e => {
+    cancelAnimationFrame(rafId);
+    sX = e.touches[0].pageX; lastX = sX; lastTime = Date.now();
+    car.style.transition = 'none'; isTouching = true; moved = false;
+  }, {passive:true});
+
+  car.addEventListener('touchmove', e => {
+    if(!isTouching) return;
+    const currX = e.touches[0].pageX; const currTime = Date.now();
+    const d = (currX - sX)*0.04;
+    updateRot(dIdx, rotations[dIdx] + d, total);
+    
+    const dt = currTime - lastTime;
+    if(dt > 0) velocity = (currX - lastX) / dt;
+    lastX = currX; lastTime = currTime; moved = true;
+  }, {passive:true});
+
+  car.addEventListener('touchend', () => {
+    isTouching = false;
+    if(!moved) return;
+    let currentRot = rotations[dIdx];
+    let v = velocity *0.8;
+
+    const animate = () => {
+      if(Math.abs(v) > 0.1) { // Frenado progresivo
+        currentRot += v; 
+        v *= 0.9; // Factor de fricción matemático solicitado
+        updateRot(dIdx, currentRot, total);
+        rafId = requestAnimationFrame(animate);
+      } else {
+        // Al frenar, se ancla perfectamente en la ventana más cercana (múltiplos de 40 grados)
+        rotations[dIdx] = Math.round(currentRot/40)*40;
+        car.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+        updateRot(dIdx, rotations[dIdx], total);
+      }
+    };
+    rafId = requestAnimationFrame(animate);
+  });
+}
+
+function updateRot(dIdx, val, total) {
+  rotations[dIdx] = val; const car = document.getElementById(`car-${dIdx}`);
+  if(car) car.style.transform = `rotateY(${val}deg)`;
+  for(let i=0; i<total; i++) {
+    const el = document.getElementById(`it-${dIdx}-${i}`);
+    if(el) el.style.transform = `rotateY(${i*40}deg) translateZ(190px) rotateY(${- (i*40) - val}deg)`;
+  }
+}
+
+// --- LÓGICA RADIAL INTELIGENTE (BÚSQUEDA EN MAPA) ---
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180; const dLon = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+async function buscarCerca(tipo, radio) {
+  markersLayer.clearLayers();
+  if(radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
+  radiusCircle = L.circle([userCoords.lat, userCoords.lon], {
+    radius: radio * 1000, color: 'var(--accent-blue)', fillColor: 'var(--accent-blue)', fillOpacity: 0.1, weight: 2
+  }).addTo(map);
+
+  const { data } = await _supabase.from('Comercios').select('*').eq('Tipo', tipo).eq('Pago_confirmado', true);
+  if(!data || data.length === 0) {
+    if(radiusCircle) map.removeLayer(radiusCircle);
+    alert(`Aún no hay comercios del rubro "${tipo}" registrados en +Cerk.`);
+    return;
+  }
+  
+  const filtrados = data.filter(c => getDistance(userCoords.lat, userCoords.lon, c.Latitud, c.Longitud) <= radio);
+  
+  if(filtrados.length >= 1) {
+    filtrados.forEach(c => L.marker([c.Latitud, c.Longitud], {icon: cerkIcon}).addTo(markersLayer).bindPopup(generarPopup(c)));
+    map.fitBounds(filtrados.map(c => [c.Latitud, c.Longitud]), { padding: [50, 50] });
+  } else if(radio < 1.5) {
+    const proxRadio = radio === 0.3 ? 0.8 : 1.5;
+    buscarCerca(tipo, proxRadio);
+  } else {
+    if(confirm(`No encontramos "${tipo}" a menos de 1.5km. ¿Deseas ver todos los comercios disponibles en la zona?`)) {
+      if(radiusCircle) map.removeLayer(radiusCircle);
+      data.forEach(c => L.marker([c.Latitud, c.Longitud], {icon: cerkIcon}).addTo(markersLayer).bindPopup(generarPopup(c)));
+      map.fitBounds(data.map(c => [c.Latitud, c.Longitud]), { padding: [50, 50] });
+    } else {
+      if(radiusCircle) map.removeLayer(radiusCircle);
+    }
+  }
+}
+
+// --- SISTEMA DE VALIDACIÓN EN TIEMPO REAL (FORMULARIO) ---
+function initValidacionesFormulario() {
+  const wsInput = document.getElementById('reg-ws');
+  const emailInput = document.getElementById('reg-email');
+  const fotosInput = document.getElementById('reg-fotos');
+
+  document.querySelectorAll('.day-btn').forEach(btn => {
+    btn.addEventListener('click', () => { btn.classList.toggle('active'); checkFormValidity(); });
+  });
+  
+  document.getElementById('break-toggle').addEventListener('change', (e) => {
+    document.getElementById('break-times').style.display = e.target.checked ? 'flex' : 'none'; checkFormValidity();
+  });
+
+  wsInput.addEventListener('blur', () => {
+    const v = wsInput.value.trim();
+    if(v && !/^\d{10,12}$/.test(v)) { alert("El número debe tener entre 10 y 12 dígitos (Ej: 584120000000)."); wsInput.value = ''; }
+    checkFormValidity();
+  });
+
+  emailInput.addEventListener('blur', () => {
+    const v = emailInput.value.trim();
+    if(v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { alert("El correo ingresado no es válido."); emailInput.value = ''; }
+    checkFormValidity();
+  });
+
+  fotosInput.addEventListener('change', () => {
+    const files = fotosInput.files;
+    if(files.length > 0) {
+      if(files.length < 2 || files.length > 3) { alert("Debes seleccionar 2 o 3 fotos exactamente."); fotosInput.value = ''; checkFormValidity(); return; }
+      for(let i=0; i<files.length; i++) {
+        if(files[i].size > 3145728) { alert(`La foto #${i+1} pesa más de 3MB. Por favor elige imágenes más ligeras.`); fotosInput.value = ''; checkFormValidity(); return; }
+      }
+    }
+    checkFormValidity();
+  });
+
+  document.querySelectorAll('#reg-ui input, #reg-ui select').forEach(el => {
+    el.addEventListener('input', checkFormValidity); el.addEventListener('change', checkFormValidity);
+  });
+}
+
+function checkFormValidity() {
+  const btn = document.getElementById('btn-activar');
+  const nombre = document.getElementById('reg-nombre').value;
+  const dial = document.getElementById('reg-dial').value;
+  const sub = document.getElementById('reg-sub').value;
+  const tipo = document.getElementById('reg-tipo').value;
+  const ws = document.getElementById('reg-ws').value;
+  const email = document.getElementById('reg-email').value;
+  const fotos = document.getElementById('reg-fotos').files;
+  const gpsCapturado = typeof regCoords !== 'undefined' && regCoords !== null;
+  const acepto = document.getElementById('reg-acepto').checked;
+
+  const days = document.querySelectorAll('.day-btn.active').length > 0;
+  const op1 = document.getElementById('t-open').value;
+  const cl1 = document.getElementById('t-close').value;
+  const partido = document.getElementById('break-toggle').checked;
+  const op2 = document.getElementById('t-open2').value;
+  const cl2 = document.getElementById('t-close2').value;
+
+  let horarioOk = days && op1 && cl1;
+  if(partido && (!op2 || !cl2)) horarioOk = false;
+
+  if(nombre && dial && sub && tipo && ws && email && horarioOk && (fotos.length >= 2 && fotos.length <= 3) && gpsCapturado && acepto) { 
+    btn.disabled = false; btn.style.opacity = '1'; 
+  } else { 
+    btn.disabled = true; btn.style.opacity = '0.5'; 
+  }
+}
+
+// --- COMPRESIÓN Y REGISTRO ---
+async function procesarRegistro() {
+  const btn = document.getElementById('btn-activar');
+  btn.innerText = "PROCESANDO..."; btn.disabled = true; btn.style.opacity = '0.5';
+
+  const nombreComercio = formatText(document.getElementById('reg-nombre').value).replace(/\s+/g, '_');
+  const whatsappComercio = document.getElementById('reg-ws').value.trim();
+  const folderPath = `${nombreComercio}-${whatsappComercio}`;
+  const files = document.getElementById('reg-fotos').files;
+  let fotosUrls = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const compressedBlob = await compressImage(files[i]);
+    const fileName = `${folderPath}/foto_${Date.now()}_${i}.jpg`;
+    const { error } = await _supabase.storage.from('imagenes_comercios').upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
+    if (error) { alert("Error al subir fotos. Reintenta."); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1'; return; }
+    const { data: urlData } = _supabase.storage.from('imagenes_comercios').getPublicUrl(fileName);
+    fotosUrls.push(urlData.publicUrl);
+  }
+
+  const daysStr = Array.from(document.querySelectorAll('.day-btn.active')).map(el => el.dataset.day).join(',');
+  const tOp1 = document.getElementById('t-open').value;
+  const tCl1 = document.getElementById('t-close').value;
+  const isBreak = document.getElementById('break-toggle').checked;
+  let horarioFinal = `${daysStr}|${tOp1}-${tCl1}`;
+  if(isBreak) {
+    const tOp2 = document.getElementById('t-open2').value;
+    const tCl2 = document.getElementById('t-close2').value;
+    horarioFinal = `${daysStr}|${tOp1}-${tCl1}/${tOp2}-${tCl2}`;
+  }
+
+  const payload = {
+    Nombre: formatText(document.getElementById('reg-nombre').value),
+    Dial: formatText(document.getElementById('reg-dial').value),
+    Tipo: formatText(document.getElementById('reg-tipo').value),
+    WhatsApp: document.getElementById('reg-ws').value.trim(),
+    Latitud: regCoords.lat,
+    Longitud: regCoords.lon,
+    Email_propietario: document.getElementById('reg-email').value.trim().toLowerCase(),
+    Horario: horarioFinal,
+    Fotos_urls: fotosUrls,
+    Pago_confirmado: false,
+    Acepto_terminos: "ACEPTADO"
+  };
+
+  const { error } = await _supabase.from('Comercios').insert(payload);
+
+  if(!error) {
+    document.querySelectorAll('#reg-ui input[type="text"], #reg-ui input[type="tel"], #reg-ui input[type="email"], #reg-ui input[type="time"], #reg-ui input[type="file"]').forEach(el => el.value = '');
+    document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('break-toggle').checked = false;
+    document.getElementById('break-times').style.display = 'none';
+    document.getElementById('reg-acepto').checked = false;
+    document.getElementById('reg-sub').innerHTML = '<select disabled></select>';
+    document.getElementById('reg-tipo').innerHTML = '<select disabled></select>';
+    
+    const btnGps = document.getElementById('btn-gps');
+    if(btnGps) { 
+      btnGps.style.background = '#e0f7fa'; btnGps.style.color = '#173b66'; btnGps.style.border = '2px dashed #173b66';
+      btnGps.innerHTML = `Capturar GPS <br><span style="color:#e63946; font-size:0.75rem; display:block; margin-top:5px;">¡Hazlo desde el local físico para precisión!</span>`;
+    }
+    regCoords = null;
+    btn.innerText = "ACTIVAR Y PAGAR";
+    irA('main-ui');
+    window.location.href = `https://wa.me/584247126548?text=Hola,%20acabo%20de%20registrar%20mi%20comercio:%20${payload.Nombre}.%20Solicito%20activacion.`;
+  } else {
+    alert("Error de red. Intenta nuevamente."); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1';
+  }
+}
+
+// --- NAVEGACIÓN Y SOPORTE ---
+async function abrirMapa(subNombre) {
+  irA('map-view'); document.getElementById('map-title').innerText = subNombre;
+  const { data } = await _supabase.from('categorias').select('busqueda').eq('nombre', subNombre).single();
+  const container = document.getElementById('filter-container');
+  container.innerHTML = '';
+  if(data && data.busqueda) {
+    data.busqueda.split(',').forEach(tipo => {
+      const b = document.createElement('button'); b.className = 'globito'; b.innerText = tipo.trim();
+      b.onclick = () => buscarCerca(tipo.trim(), 0.3);
+      container.appendChild(b);
+    });
+  }
+}
+
+function irA(id) {
+  if(id === 'main-ui') {
+    if(markersLayer) markersLayer.clearLayers();
+    if(radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
+    if(routingControl) { map.removeControl(routingControl); routingControl = null; }
+    document.getElementById('filter-container').innerHTML = '';
+    document.getElementById('map-title').innerText = 'MAPA';
+  }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  
+  if(id==='map-view') {
+    setTimeout(() => {
+      map.invalidateSize();
+      if(userCoords) map.setView([userCoords.lat, userCoords.lon], 14);
+    }, 300);
+  }
+}
+
+function mostrarRegistro() { 
+  const w = document.getElementById('welcome-screen');
+  w.style.display='flex'; 
+  w.innerHTML = `<div style="position:absolute; bottom:15%; left:10%; font-family: 'Georgia', serif; font-style: italic; font-size: 2.5rem; color: white;">Bienvenido a +CERK</div>`;
+  setTimeout(() => { 
+    w.classList.add('fade-out'); 
+    irA('reg-ui'); 
+    setTimeout(() => { w.style.display='none'; w.classList.remove('fade-out'); }, 600);
+  }, 1600); 
+}
+
+function capturarGPS() {
+  navigator.geolocation.getCurrentPosition(p => {
+    regCoords = {lat: p.coords.latitude, lon: p.coords.longitude};
+    const btnGps = document.getElementById('btn-gps');
+    if(btnGps) {
+      btnGps.style.background = '#25D366'; btnGps.style.color = 'white'; btnGps.style.border = '2px solid #25D366';
+      btnGps.innerHTML = 'UBICACIÓN REGISTRADA ✓';
+    }
+    checkFormValidity();
+  });
+}
+
+function popularSelectCategorias() { 
+  const s = document.getElementById('reg-dial');
+  categoriasConfig.forEach(c => s.innerHTML += `<option value="${c}">${c}</option>`); 
+}
+
+async function actualizarSubcategorias() {
+  const cat = document.getElementById('reg-dial').value; const sub = document.getElementById('reg-sub'); const tipo = document.getElementById('reg-tipo');
+  sub.innerHTML = '<option value="">Cargando...</option>'; tipo.innerHTML = '<option value="">Selecciona...</option>'; tipo.disabled = true;
+  if(!cat) { sub.disabled = true; checkFormValidity(); return; }
+  const { data } = await _supabase.from('categorias').select('nombre').eq('grupo', cat);
+  sub.innerHTML = '<option value="">Selecciona...</option>'; data.forEach(d => sub.innerHTML += `<option value="${d.nombre}">${d.nombre}</option>`);
+  sub.disabled = false; checkFormValidity();
+}
+
+async function actualizarSubdivisiones() {
+  const subNombre = document.getElementById('reg-sub').value; const tipo = document.getElementById('reg-tipo');
+  tipo.innerHTML = '<option value="">Cargando...</option>';
+  if(!subNombre) { tipo.disabled = true; checkFormValidity(); return; }
+  const { data } = await _supabase.from('categorias').select('busqueda').eq('nombre', subNombre).single();
+  tipo.innerHTML = '<option value="">Selecciona...</option>';
+  if(data && data.busqueda) { data.busqueda.split(',').forEach(t => tipo.innerHTML += `<option value="${t.trim()}">${t.trim()}</option>`); tipo.disabled = false; }
+  checkFormValidity();
+}
+
+// --- EVENTOS NATIVOS DE RETORNO A LA APP (CALIFICACIÓN) ---
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    if (comercioPendienteCalificar) ratingActivado = true;
+  }
+  if (document.visibilityState === 'visible' && comercioPendienteCalificar && ratingActivado) {
+    setTimeout(() => {
+      document.getElementById('rating-modal').style.display = 'flex';
+    }, 500); // Pequeño delay de transición para mostrar el popup al volver a la app
+  }
+});
+
+function cerrarModalCalificacion() {
+  document.getElementById('rating-modal').style.display = 'none';
+  comercioPendienteCalificar = null;
+  ratingActivado = false;
+}
+
+async function enviarCalificacion(estrellas) {
+  document.getElementById('rating-modal').style.display = 'none';
+  if(comercioPendienteCalificar) {
+    try {
+      await _supabase.from('calificaciones').insert({ estrellas: estrellas });
+    } catch(e) {}
+    comercioPendienteCalificar = null;
+    ratingActivado = false;
+  }
+}
+
+// --- ARRANQUE ---
+window.onload = () => {
+  initValidacionesFormulario(); checkFormValidity(); initContador(); cargarDiales(); popularSelectCategorias();
+
+  map = L.map('map').setView([7.767, -72.230], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+
+  map.on('popupclose', () => {
+    if(routingControl) { map.removeControl(routingControl); routingControl = null; }
+  });
+
+  navigator.geolocation.getCurrentPosition(p => {
+    userCoords = {lat: p.coords.latitude, lon: p.coords.longitude};
+    L.circle([userCoords.lat, userCoords.lon], {radius: 40, color: '#173b66', fillOpacity: 1}).addTo(map).bindPopup("<b>Estás aquí</b>");
+  });
+
+  setTimeout(() => {
+    const splash = document.getElementById('splash-screen');
+    splash.classList.add('fade-out');
+    setTimeout(() => splash.style.display = 'none', 500);
+  }, 800); 
+};
+</script>
+</body>
+</html>
