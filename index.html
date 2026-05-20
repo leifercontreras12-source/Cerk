@@ -716,155 +716,22 @@ function checkFormValidity() {
   }
 }
 
-// --- COMPRESIÓN Y REGISTRO ---
-// ==========================================
-// CONTROL DE PLANES Y AUTOMATIZACIÓN DE VITRINA
-// ==========================================
-
-let planSeleccionado = null; // Almacena el plan activo ('normal' o 'premium')
-
-// 1. Controla el despliegue de las tarjetas y limpia los datos al cambiar de opinión
-function seleccionarPlan(plan) {
-  planSeleccionado = plan;
+ subSelect = document.getElementById('reg-sub');
   
-  const cardNormal = document.getElementById('plan-card-normal');
-  const cardPremium = document.getElementById('plan-card-premium');
-  const formulario = document.getElementById('formulario-desplegable');
-  const fotosTexto = document.getElementById('fotos-guia-texto');
-  
-  // RESET DE SEGURIDAD: Limpia todo el formulario para evitar contaminar Supabase
-  document.getElementById('reg-nombre').value = '';
-  document.getElementById('reg-dial').value = '';
-  document.getElementById('reg-sub').innerHTML = '<option value="">⚠️ Elija primero una categoría</option>';
-  document.getElementById('reg-sub').disabled = true;
-  document.getElementById('reg-tipo').innerHTML = '<option value="">⚠️ Elija primero una subcategoría</option>';
-  document.getElementById('reg-tipo').disabled = true;
-  document.getElementById('reg-ws').value = '';
-  document.getElementById('reg-email').value = '';
-  document.getElementById('reg-fotos').value = '';
-  document.getElementById('reg-acepto').checked = false;
-  document.getElementById('break-toggle').checked = false;
-  document.getElementById('break-times').style.display = 'none';
-  document.getElementById('btn-activar').disabled = true;
-  document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
-
-  // Efecto visual sofisticado de selección y opacidad en los cuadros
-  if (plan === 'normal') {
-    cardNormal.style.border = "3px solid var(--accent-blue)";
-    cardNormal.style.background = "#f4f7f6";
-    cardPremium.style.border = "1px solid #7a8a99";
-    cardPremium.style.background = "var(--white)";
-    cardPremium.style.opacity = "0.5";
-    cardNormal.style.opacity = "1";
-    fotosTexto.textContent = "FOTOS (MÍN. 2 - MÁX. 3 - 3MB C/U)";
-  } else {
-    cardPremium.style.border = "3px solid var(--accent-blue)";
-    cardPremium.style.background = "#f4f7f6";
-    cardNormal.style.border = "1px solid #7a8a99";
-    cardNormal.style.background = "var(--white)";
-    cardNormal.style.opacity = "0.5";
-    cardPremium.style.opacity = "1";
-    fotosTexto.textContent = "FOTOS (MÍN. 2 - MÁX. 5 - 3MB C/U)";
-  }
-
-  // Despliega el formulario en la misma pantalla
-  formulario.style.display = 'block';
-}
-
-// 2. Modificación de tus funciones en cascada originales para inyectar los mensajes guía
-function actualizarSubcategorias() {
-  const catSelect = document.getElementById('reg-dial');
-  const subSelect = document.getElementById('reg-sub');
-  const tipoSelect = document.getElementById('reg-tipo');
-  
-  if (catSelect.value === "") {
-    subSelect.innerHTML = '<option value="">⚠️ Elija primero una categoría</option>';
-    subSelect.disabled = true;
-    tipoSelect.innerHTML = '<option value="">⚠️ Elija primero una subcategoría</option>';
-    tipoSelect.disabled = true;
-    return;
-  }
-  
-  // Limpieza previa antes de que corra tu lógica de carga original
-  subSelect.innerHTML = '<option value="">Selecciona una subcategoría...</option>';
-  subSelect.disabled = false;
-  
-  // [AQUÍ CONTINÚA TU CÓDIGO ORIGINAL QUE INYECTA LAS SUBCATEGORÍAS REALES EN EL SELECT]
-}
-
-function actualizarSubdivisiones() {
-  const subSelect = document.getElementById('reg-sub');
-  const tipoSelect = document.getElementById('reg-tipo');
-  
-  if (subSelect.value === "") {
-    tipoSelect.innerHTML = '<option value="">⚠️ Elija primero una subcategoría</option>';
-    tipoSelect.disabled = true;
-    return;
-  }
-  
-  // Limpieza previa antes de que corra tu lógica de carga original
-  tipoSelect.innerHTML = '<option value="">Selecciona una subdivisión...</option>';
-  tipoSelect.disabled = false;
-  
-  // [AQUÍ CONTINÚA TU CÓDIGO ORIGINAL QUE INYECTA LAS SUBDIVISIONES REALES EN EL SELECT]
-}
-
-// 3. Tu función unificada de compresión, registro en Supabase y doble envío a WhatsApp
-async function procesarRegistroConPlan() {
-  const btn = document.getElementById('btn-activar');
-  btn.innerText = "PROCESANDO..."; btn.disabled = true; btn.style.opacity = '0.5';
-
-  const nombreComercio = formatText(document.getElementById('reg-nombre').value).replace(/\s+/g, '_');
-  const whatsappComercio = document.getElementById('reg-ws').value.trim();
-  const folderPath = `${nombreComercio}-${whatsappComercio}`;
-  const files = document.getElementById('reg-fotos').files;
-  
-  // CANDADO DE UX: Valida el límite estricto de fotos según el plan abierto
-  const maxFotosPermitidas = (planSeleccionado === 'premium') ? 5 : 3;
-  if (files.length < 2 || files.length > maxFotosPermitidas) {
-    alert(`Error: Para el Plan ${planSeleccionado === 'premium' ? 'Premium' : 'Estándar'} debes subir entre 2 y ${maxFotosPermitidas} fotos.`);
-    btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1';
-    return;
-  }
-
-  let fotosUrls = [];
-
-  // Tu bucle original de compresión y subida a Supabase Storage se queda intacto
-  for (let i = 0; i < files.length; i++) {
-    const compressedBlob = await compressImage(files[i]);
-    const fileName = `${folderPath}/foto_${Date.now()}_${i}.jpg`;
-    const { error } = await _supabase.storage.from('imagenes_comercios').upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
-    if (error) { alert("Error al subir fotos. Reintenta."); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1'; return; }
-    const { data: urlData } = _supabase.storage.from('imagenes_comercios').getPublicUrl(fileName);
-    fotosUrls.push(urlData.publicUrl);
-  }
-
-  // Tu lógica original de armado de Horario escrito
-  const daysStr = Array.from(document.querySelectorAll('.day-btn.active')).map(el => el.dataset.day).join(',');
-  const tOp1 = document.getElementById('t-open').value;
-  const tCl1 = document.getElementById('t-close').value;
-  const isBreak = document.getElementById('break-toggle').checked;
-  let horarioFinal = `${daysStr}|${tOp1}-${tCl1}`;
-  if(isBreak) {
-    const tOp2 = document.getElementById('t-open2').value;
-    const tCl2 = document.getElementById('t-close2').value;
-    horarioFinal = `${daysStr}|${tOp1}-${tCl1}/${tOp2}-${tCl2}`;
-  }
-
-  // EL PAYLOAD: Tus datos limpios inyectando la nueva columna Plan en Supabase
+   // EL PAYLOAD: Tus datos limpios inyectando la nueva columna Plan en Supabase
   const payload = {
     Nombre: formatText(document.getElementById('reg-nombre').value),
     Dial: formatText(document.getElementById('reg-dial').value),
     Tipo: formatText(document.getElementById('reg-tipo').value),
     WhatsApp: whatsappComercio,
-    Latitud: regCoords.lat,
-    Longitud: regCoords.lon,
+    Latitud: regCoords ? regCoords.lat : null,
+    Longitud: regCoords ? regCoords.lon : null,
     Email_propietario: document.getElementById('reg-email').value.trim().toLowerCase(),
     Horario: horarioFinal,
     Fotos_urls: fotosUrls,
     Pago_confirmado: false,
     Acepto_terminos: "ACEPTADO",
-    Plan: planSeleccionado // 👈 Registra automáticamente 'normal' o 'premium' en tu nueva columna
+    Plan: planSeleccionado
   };
 
   const { error } = await _supabase.from('Comercios').insert(payload);
@@ -880,14 +747,19 @@ async function procesarRegistroConPlan() {
     document.getElementById('reg-sub').disabled = true;
     document.getElementById('reg-tipo').innerHTML = '<option value="">⚠️ Elija primero una subcategoría</option>';
     document.getElementById('reg-tipo').disabled = true;
-    
+
     const btnGps = document.getElementById('btn-gps');
     if(btnGps) { 
-      btnGps.style.background = '#e0f7fa'; btnGps.style.color = '#173b66'; btnGps.style.border = '2px dashed #173b66';
+      btnGps.style.background = '#e0f7fa'; 
+      btnGps.style.color = '#173b66'; 
+      btnGps.style.border = '2px dashed #173b66';
       btnGps.innerHTML = `Capturar GPS <br><span style="color:#e63946; font-size:0.75rem; display:block; margin-top:5px;">¡Hazlo desde el local físico para precisión!</span>`;
     }
+    
     regCoords = null;
     btn.innerText = "ACTIVAR Y PAGAR";
+    btn.disabled = false;
+    btn.style.opacity = '1';
     
     // Ocultar formulario de nuevo y regresar a la vista inicial
     document.getElementById('formulario-desplegable').style.display = 'none';
@@ -897,30 +769,23 @@ async function procesarRegistroConPlan() {
     document.getElementById('plan-card-premium').style.opacity = "1";
     irA('main-ui');
 
-    // DOBLE ENVÍO: Preparación de tus mensajes de WhatsApp personalizados con precios
+    // REDIRECCIÓN A WHATSAPP: Mensaje automatizado con los datos del plan seleccionado
     let precio = (planSeleccionado === 'premium') ? "$3" : "$1";
     let planTexto = (planSeleccionado === 'premium') ? "Premium" : "Estándar";
-    let mensajeEncodado = encodeURIComponent(`Hola, acabo de registrar mi comercio ${payload.Nombre} en el Plan ${planTexto} (${precio}). Solicito los datos de pago para activar mi vitrina comercial.`);
+    let textoMensaje = `Hola, acabo de registrar mi comercio: ${payload.Nombre} en el Plan ${planTexto} (${precio}). Solicito activación.`;
+    let mensajeEncodado = encodeURIComponent(textoMensaje);
     
-    // Dispara el chat hacia tu número (584247126548) de forma nativa en pestaña nueva
-    window.open(`https://whatsapp.com{mensajeEncodado}`, '_blank');
+    // Abre el chat directamente usando wa.me en tu móvil
+    window.location.href = `https://wa.me{mensajeEncodado}`;
 
   } else {
     alert("Error de red o base de datos. Intenta nuevamente."); 
-    btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1';
+    btn.innerText = "ACTIVAR Y PAGAR"; 
+    btn.disabled = false; 
+    btn.style.opacity = '1';
   }
 }
 
-      btnGps.innerHTML = `Capturar GPS <br><span style="color:#e63946; font-size:0.75rem; display:block; margin-top:5px;">¡Hazlo desde el local físico para precisión!</span>`;
-    }
-    regCoords = null;
-    btn.innerText = "ACTIVAR Y PAGAR";
-    irA('main-ui');
-    window.location.href = `https://wa.me/584247126548?text=Hola,%20acabo%20de%20registrar%20mi%20comercio:%20${payload.Nombre}.%20Solicito%20activacion.`;
-  } else {
-    alert("Error de red. Intenta nuevamente."); btn.innerText = "ACTIVAR Y PAGAR"; btn.disabled = false; btn.style.opacity = '1';
-  }
-}
 
 // --- NAVEGACIÓN Y SOPORTE ---
 async function abrirMapa(subNombre) {
